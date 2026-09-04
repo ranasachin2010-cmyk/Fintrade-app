@@ -2,18 +2,21 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title="V22 NIFTY PRO", layout="wide")
-st.markdown("<h1 style=color:#00D1FF>FinTrade V22 - NIFTY 50 PRO</h1>", unsafe_allow_html=True)
-st.write("V21.1 OK Upgraded to V22")
+st.set_page_config(page_title="V22.1 FAST", layout="wide")
+st.markdown("<h1 style=color:#00D1FF>FinTrade V22.1 - FAST PRO</h1>", unsafe_allow_html=True)
+st.write("V21.1 OK logic - Speed fixed")
 
 TICKER_MAP = {"ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS","ZOM":"ETERNAL.NS"}
 NAME_MAP = {"ETERNAL.NS":"ZOMATO","PAYTM.NS":"PAYTM"}
 
 def load_data(tick):
-    t = yf.Ticker(tick)
-    df = t.history(period="3mo", interval="1d", auto_adjust=True)
-    if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
-    return df
+    try:
+        t = yf.Ticker(tick)
+        df = t.history(period="1mo", interval="1d", auto_adjust=True)
+        if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
+        return df
+    except:
+        return pd.DataFrame()
 
 def resolve_ticker(u):
     uu = u.upper().strip()
@@ -62,24 +65,68 @@ def get_signal(df):
     final = "HOLD"
     if score >= 2: final = "BUY"
     if score <= -2: final = "SELL"
-    return final, last_rsi, score, last_ema20, last_ema50
+    return final, last_rsi, score
 
 def run_screener():
-    watch = ["RELIANCE.NS","TCS.NS","INFY.NS","HDFCBANK.NS","ICICIBANK.NS","BHARTIARTL.NS","ITC.NS","ETERNAL.NS","PAYTM.NS","SBIN.NS"]
+    watch = ["RELIANCE.NS","TCS.NS","INFY.NS","HDFCBANK.NS","ICICIBANK.NS","ETERNAL.NS","PAYTM.NS","SBIN.NS"]
     rows = []
     for sym in watch:
         d = load_data(sym)
-        if not d.empty:
-            sig, rsi_v, sc, e20, e50 = get_signal(d)
+        if not d.empty and len(d) > 20:
+            sig, rsi_v, sc = get_signal(d)
             lc = float(d["Close"].iloc[-1])
             sp = float(d["Low"].tail(20).min())
             rs_ = float(d["High"].tail(20).max())
-            tg = rs_; sl = sp; rr = 1.0
-            if sig == "BUY": tg = lc + (lc - sp) * 1.5; sl = sp; rr = (tg - lc) / (lc - sl) if (lc - sl)!= 0 else 1.5
-            if sig == "SELL": tg = sp; sl = rs_; rr = (lc - tg) / (sl - lc) if (sl - lc)!= 0 else 1.5
+            tg = rs_; sl = sp
+            if sig == "BUY": tg = lc + (lc - sp) * 1.5; sl = sp
+            if sig == "SELL": tg = sp; sl = rs_
             disp = get_display_name(sym)
-            rows.append({"Stock":disp,"LTP":round(lc,2),"Signal":sig,"Target":round(tg,2),"SL":round(sl,2),"RR":round(rr,2),"Score":sc,"RSI":round(rsi_v,1)})
+            rows.append({"Stock":disp,"LTP":round(lc,2),"Signal":sig,"Target":round(tg,2),"SL":round(sl,2),"Score":sc,"RSI":round(rsi_v,1)})
     df_out = pd.DataFrame(rows)
     st.dataframe(df_out, use_container_width=True)
-    csv = df_out.to_csv(index=False)
-    st.download_button("Download CSV", csv, "screener_v22.csv", "text/csv")
+
+st.sidebar.header("Settings")
+ticker_input = st.sidebar.text_input("Stock", value="Zomato")
+ticker = resolve_ticker(ticker_input)
+display_name = get_display_name(ticker)
+
+st.write("Fetching")
+st.write(ticker)
+
+df = load_data(ticker)
+st.write("Rows")
+st.write(len(df))
+
+if df.empty:
+    st.error("No data - Try RELIANCE")
+    st.stop()
+
+last_close = float(df["Close"].iloc[-1])
+support_level = float(df["Low"].tail(20).min())
+resist_level = float(df["High"].tail(20).max())
+signal, rsi_val, score = get_signal(df)
+
+target_level = resist_level; stoploss_level = support_level
+if signal == "BUY": diff = last_close - support_level; target_level = last_close + diff * 1.5; stoploss_level = support_level
+if signal == "SELL": target_level = support_level; stoploss_level = resist_level
+
+if signal == "BUY": st.success("BUY " + display_name)
+if signal == "HOLD": st.warning("HOLD " + display_name)
+if signal == "SELL": st.error("SELL " + display_name)
+
+st.metric("Ticker", ticker)
+st.metric("LTP", round(last_close,2))
+st.metric("Target", round(target_level,2))
+st.metric("SL", round(stoploss_level,2))
+st.metric("Support", round(support_level,2))
+st.metric("Resist", round(resist_level,2))
+st.metric("RSI", round(rsi_val,1))
+st.metric("Score", score)
+
+st.write("Price Chart")
+st.line_chart(df["Close"])
+
+st.subheader("One Click Screener")
+if st.button("Run Screener"): run_screener()
+
+st.write("V22.1 OK")
