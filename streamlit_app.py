@@ -2,13 +2,14 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title='V19 PRO', layout='wide')
-st.markdown('<h1 style="color:#00D1FF">FinTrade V19 - PRO FINAL</h1>', unsafe_allow_html=True)
-st.write('Stable + Screener + No Glitch')
+st.set_page_config(page_title='V19.1', layout='wide')
+st.markdown('<h1 style="color:#00D1FF">FinTrade V19.1 - FAST CACHE</h1>', unsafe_allow_html=True)
+st.write('Loading... if blank, wait 5 sec then refresh')
 
 TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS','ZOM':'ETERNAL.NS'}
 NAME_MAP = {'ETERNAL.NS':'ZOMATO','PAYTM.NS':'PAYTM'}
 
+@st.cache_data(ttl=300)
 def load_data(tick):
     t = yf.Ticker(tick)
     df = t.history(period='3mo', interval='1d', auto_adjust=True)
@@ -68,21 +69,3 @@ def get_signal(df):
     if last_rsi < 40:
         score = score - 1
     if last_macd > last_sig:
-        score = score + 1
-    if last_macd < last_sig:
-        score = score - 1
-    final = 'HOLD'
-    if score >= 2:
-        final = 'BUY'
-    if score <= -2:
-        final = 'SELL'
-    return final, last_rsi, score, last_ema20, last_ema50
-
-st.sidebar.header('Settings')
-ticker_input = st.sidebar.text_input('Stock', value='Zomato')
-ticker = resolve_ticker(ticker_input)
-display_name = get_display_name(ticker)
-
-df = load_data(ticker)
-if df.empty:
-    st.error('No data')
