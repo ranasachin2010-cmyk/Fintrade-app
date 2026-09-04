@@ -2,9 +2,9 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title="V24.1 ULTIMATE FAST", layout="wide")
-st.markdown("<h1 style=color:#00D1FF>FinTrade V24.1 - ULTIMATE FAST</h1>", unsafe_allow_html=True)
-st.write("V23 25.4% Profit Success - V24.1 Fast Fix")
+st.set_page_config(page_title="V25 ULTRA LIGHT", layout="wide")
+st.markdown("<h1 style=color:#00D1FF>FinTrade V25 - ULTRA LIGHT</h1>", unsafe_allow_html=True)
+st.write("V23 ka working logic - No Chart - No Glitch")
 
 TICKER_MAP = {"ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS","ZOM":"ETERNAL.NS","CUPID":"CUPID.NS"}
 NAME_MAP = {"ETERNAL.NS":"ZOMATO","PAYTM.NS":"PAYTM","CUPID.NS":"CUPID"}
@@ -67,48 +67,20 @@ def get_signal(df):
     if score <= -2: final = "SELL"
     return final, last_rsi, score
 
-def run_screener():
-    watch = ["RELIANCE.NS","TCS.NS","INFY.NS","HDFCBANK.NS","ICICIBANK.NS","CUPID.NS","ETERNAL.NS","PAYTM.NS","SBIN.NS"]
-    rows = []
-    for sym in watch:
-        d = load_data(sym)
-        if not d.empty and len(d) > 20:
-            sig, rsi_v, sc = get_signal(d)
-            lc = float(d["Close"].iloc[-1])
-            sp = float(d["Low"].tail(20).min())
-            rs_ = float(d["High"].tail(20).max())
-            tg = rs_; sl = sp
-            if sig == "BUY": tg = lc + (lc - sp) * 1.5; sl = sp
-            if sig == "SELL": tg = sp; sl = rs_
-            prof = ((tg - lc) / lc * 100) if sig!= "SELL" else ((lc - tg) / lc * 100)
-            disp = get_display_name(sym)
-            rows.append({"Stock":disp,"LTP":round(lc,2),"Signal":sig,"Target":round(tg,2),"Profit%":round(prof,1),"SL":round(sl,2),"Score":sc,"RSI":round(rsi_v,1)})
-    df_out = pd.DataFrame(rows)
-    if not df_out.empty:
-        df_out = df_out.sort_values(by="Profit%", ascending=False)
-        st.dataframe(df_out, use_container_width=True)
-        csv = df_out.to_csv(index=False)
-        st.download_button("Download V24.1 CSV", csv, "screener_v24_1.csv", "text/csv")
-        best = df_out.iloc[0]
-        st.success("Best Pick: " + str(best["Stock"]) + " " + str(best["Signal"]) + " Profit " + str(best["Profit%"]) + "%")
-    else:
-        st.write("No data in screener")
-
 st.sidebar.header("Settings")
 ticker_input = st.sidebar.text_input("Stock", value="Cupid")
 ticker = resolve_ticker(ticker_input)
 display_name = get_display_name(ticker)
 
-st.write("Fetching")
-st.write(ticker)
+st.write("Fetching: " + ticker)
 
 df = load_data(ticker)
 
-st.write("Rows")
+st.write("Rows:")
 st.write(len(df) if not df.empty else 0)
 
 if df.empty:
-    st.error("No data - Check Internet")
+    st.error("No data - Internet check karo")
     st.stop()
 
 last_close = float(df["Close"].iloc[-1])
@@ -124,19 +96,12 @@ profit_pct = ((target_level - last_close) / last_close * 100) if signal!= "SELL"
 
 if signal == "BUY": st.success("BUY " + display_name + " | Profit " + str(round(profit_pct,1)) + "%")
 if signal == "HOLD": st.warning("HOLD " + display_name)
-if signal == "SELL": st.error("SELL " + display_name + " | Down " + str(round(profit_pct,1)) + "%")
+if signal == "SELL": st.error("SELL " + display_name)
 
-st.metric("Ticker", ticker)
 st.metric("LTP", round(last_close,2))
 st.metric("Target", str(round(target_level,2)) + " (" + str(round(profit_pct,1)) + "%)")
 st.metric("SL", round(stoploss_level,2))
 st.metric("RSI", round(rsi_val,1))
 st.metric("Score", score)
 
-st.write("Price Chart")
-st.line_chart(df["Close"])
-
-st.subheader("One Click Screener - Sorted by Profit")
-if st.button("Run Screener"): run_screener()
-
-st.write("V24.1 ULTIMATE FAST OK")
+st.write("V25 ULTRA LIGHT OK - No Chart")
