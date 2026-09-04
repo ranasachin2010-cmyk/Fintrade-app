@@ -4,8 +4,8 @@ import plotly.graph_objects as go
 from plotly.graph_objects import Candlestick, Scatter
 import pandas as pd
 
-st.set_page_config(page_title='V17.2 FIX', layout='wide')
-st.markdown('<h1 style="color:#00D1FF">FinTrade V17.2 FIXED</h1>', unsafe_allow_html=True)
+st.set_page_config(page_title='V17.3 ZOOM', layout='wide')
+st.markdown('<h1 style="color:#00D1FF">FinTrade V17.3 - ZOOM FIXED</h1>', unsafe_allow_html=True)
 
 TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS'}
 
@@ -99,13 +99,13 @@ if signal == 'SELL':
     target = sup
     stoploss = res
 
-# CARD - SAFE
+# CARDS
 html1 = '<div style="background:' + color + ';padding:20px;border-radius:15px;text-align:center"><h1 style="color:black">' + signal + ' ' + ticker + '</h1></div>'
 st.markdown(html1, unsafe_allow_html=True)
-st.write('Score ' + str(score) + ' RSI ' + str(round(rsi_val,1)) + ' LTP ' + str(round(last_close,2)))
-st.write('Target ' + str(round(target,2)) + ' SL ' + str(round(stoploss,2)))
+st.write('Score ' + str(score) + ' | RSI ' + str(round(rsi_val,1)) + ' | LTP ' + str(round(last_close,2)))
+st.write('Target ' + str(round(target,2)) + ' | SL ' + str(round(stoploss,2)) + ' | Support ' + str(round(sup,2)) + ' Resist ' + str(round(res,2)))
 
-# CHART - NO NESTED BRACKETS - FULL FIX
+# CHART - ZOOM FIX
 xs = df.index
 fig = go.Figure()
 
@@ -117,7 +117,6 @@ cs.low = df['Low']
 cs.close = df['Close']
 fig.add_trace(cs)
 
-# Support line
 s1 = Scatter()
 s1.x = xs
 s1.y = [sup]*len(xs)
@@ -126,7 +125,6 @@ s1.name = 'Support'
 s1.line = dict(color='green', dash='dash')
 fig.add_trace(s1)
 
-# Resist line
 s2 = Scatter()
 s2.x = xs
 s2.y = [res]*len(xs)
@@ -135,7 +133,6 @@ s2.name = 'Resist'
 s2.line = dict(color='red', dash='dash')
 fig.add_trace(s2)
 
-# Target line
 s3 = Scatter()
 s3.x = xs
 s3.y = [target]*len(xs)
@@ -144,7 +141,6 @@ s3.name = 'Target'
 s3.line = dict(color='lime', width=2)
 fig.add_trace(s3)
 
-# SL line
 s4 = Scatter()
 s4.x = xs
 s4.y = [stoploss]*len(xs)
@@ -153,7 +149,6 @@ s4.name = 'SL'
 s4.line = dict(color='orange', width=2)
 fig.add_trace(s4)
 
-# EMA20
 s5 = Scatter()
 s5.x = xs
 s5.y = df['Close'].ewm(span=20).mean()
@@ -162,7 +157,6 @@ s5.name = 'EMA20'
 s5.line = dict(color='yellow')
 fig.add_trace(s5)
 
-# EMA50
 s6 = Scatter()
 s6.x = xs
 s6.y = df['Close'].ewm(span=50).mean()
@@ -171,7 +165,11 @@ s6.name = 'EMA50'
 s6.line = dict(color='cyan')
 fig.add_trace(s6)
 
-fig.update_layout(height=600, template='plotly_dark')
+# ZOOM FIX - Y AXIS
+low_val = df['Low'].min()
+high_val = df['High'].max()
+pad = (high_val - low_val) * 0.1
+fig.update_layout(height=650, template='plotly_dark', yaxis=dict(range=[low_val - pad, high_val + pad]))
 fig.update_xaxes(rangeslider_visible=False)
 st.plotly_chart(fig, use_container_width=True)
-st.success('V17.2 Loaded OK')
+st.success('V17.3 Chart Zoom Fixed!')
