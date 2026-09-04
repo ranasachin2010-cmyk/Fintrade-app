@@ -2,11 +2,11 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title='V19.1', layout='wide')
-st.markdown('<h1 style="color:#00D1FF">FinTrade V19.1 - FAST CACHE</h1>', unsafe_allow_html=True)
-st.write('Loading... if blank, wait 5 sec then refresh')
+st.set_page_config(page_title='V19.2', layout='wide')
+st.markdown('<h1 style="color:#00D1FF">FinTrade V19.2 - INDENT FIX</h1>', unsafe_allow_html=True)
+st.write('App started OK - Fixed')
 
-TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS','ZOM':'ETERNAL.NS'}
+TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS'}
 NAME_MAP = {'ETERNAL.NS':'ZOMATO','PAYTM.NS':'PAYTM'}
 
 @st.cache_data(ttl=300)
@@ -56,16 +56,65 @@ def get_signal(df):
     last_macd = float(macd.iloc[-1])
     last_sig = float(sig.iloc[-1])
     score = 0
-    if last_ema20 > last_ema50:
-        score = score + 1
-    if last_ema20 < last_ema50:
-        score = score - 1
-    if last_close > last_ema20:
-        score = score + 1
-    if last_close < last_ema20:
-        score = score - 1
-    if last_rsi > 60:
-        score = score + 1
-    if last_rsi < 40:
-        score = score - 1
-    if last_macd > last_sig:
+    if last_ema20 > last_ema50: score = score + 1
+    if last_ema20 < last_ema50: score = score - 1
+    if last_close > last_ema20: score = score + 1
+    if last_close < last_ema20: score = score - 1
+    if last_rsi > 60: score = score + 1
+    if last_rsi < 40: score = score - 1
+    if last_macd > last_sig: score = score + 1
+    if last_macd < last_sig: score = score - 1
+    final = 'HOLD'
+    if score >= 2: final = 'BUY'
+    if score <= -2: final = 'SELL'
+    return final, last_rsi, score
+
+st.sidebar.header('Settings')
+ticker_input = st.sidebar.text_input('Stock', value='Zomato')
+ticker = resolve_ticker(ticker_input)
+display_name = get_display_name(ticker)
+st.write('Ticker')
+st.write(ticker)
+
+with st.status('Fetching...'):
+    df = load_data(ticker)
+
+st.write('Rows')
+st.write(len(df))
+
+if df.empty:
+    st.error('No data')
+    st.stop()
+
+last_close = float(df['Close'].iloc[-1])
+support_level = float(df['Low'].tail(20).min())
+resist_level = float(df['High'].tail(20).max())
+signal, rsi_val, score = get_signal(df)
+
+target_level = resist_level
+stoploss_level = support_level
+if signal == 'BUY':
+    diff = last_close - support_level
+    target_level = last_close + diff * 1.5
+    stoploss_level = support_level
+if signal == 'SELL':
+    target_level = support_level
+    stoploss_level = resist_level
+
+ltp_r = round(last_close, 2)
+tgt_r = round(target_level, 2)
+sl_r = round(stoploss_level, 2)
+rsi_r = round(rsi_val, 1)
+
+if signal == 'BUY': st.success(signal + ' ' + display_name)
+if signal == 'HOLD': st.warning(signal + ' ' + display_name)
+if signal == 'SELL': st.error(signal + ' ' + display_name)
+
+c1 = st.columns(3)
+c1[0].metric('LTP', ltp_r)
+c1[1].metric('Target', tgt_r)
+c1[2].metric('SL', sl_r)
+
+c2 = st.columns(3)
+c2[0].metric('Support', round(support_level,2))
+c2
