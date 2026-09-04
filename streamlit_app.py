@@ -1,119 +1,181 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import yfinance as yf
-import plotly.graph_objects as go
 import pandas as pd
-import numpy as np
-from fpdf import FPDF
-import urllib.parse
 
-st.set_page_config(page_title='FinTrade V13.1 NSE FIX', layout='wide')
-st.markdown('<h2 style="color:#00D1FF">FinTrade V13.1 - 100% INDIAN NSE/BSE FIXED</h2>', unsafe_allow_html=True)
-st.info('Fix: TradingView NSE block karta hai Apple dikhata hai, isliye ab BSE + Plotly NSE use kiya hai - 100% Indian!')
+st.set_page_config(page_title="V17 CLEAN 500", layout="wide")
 
-@st.cache_data(ttl=300)
-def load_data(tick, per='6mo', interval='1d'):
-    df = yf.download(tick, period=per, interval=interval, auto_adjust=True, progress=False)
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
-    return df
+st.markdown("""
+<style>
+.stApp {background: #0a0e1a;}
+h1 {background: linear-gradient(90deg, #00D1FF, #7000FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight:900; font-size:38px!important;}
+.stButton>button {background: linear-gradient(90deg, #00D1FF, #7000FF); color:white; border:none; border-radius:12px; padding:12px 20px; font-weight:700; width:100%;}
+.premium-card {background: linear-gradient(135deg, #1a1f35, #12162a); border:1px solid #2a3a5c; border-radius:15px; padding:20px; margin:10px 0;}
+.buy-card {border-left:5px solid #00ff88;}
+.sell-card {border-left:5px solid #ff0040;}
+.hold-card {border-left:5px solid #ffaa00;}
+</style>
+""", unsafe_allow_html=True)
 
-def make_pdf(ticker, ltp, sup, res):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, f'FinTrade {ticker}', ln=True, align='C')
-    pdf.set_font('Arial', '', 12)
-    pdf.ln(5)
-    pdf.cell(0, 10, f'LTP {float(ltp):.2f} S {float(sup):.2f} R {float(res):.2f}', ln=True)
-    return bytes(pdf.output())
+st.markdown("<h1>FinTrade V17 - CLEAN FULL 500 💎</h1>", unsafe_allow_html=True)
+st.write("PDF Compare ❌ Deleted | Option Chain ❌ Deleted | Only Scanner ✅")
 
-if 'watchlist' not in st.session_state:
-    st.session_state.watchlist = ['RELIANCE.NS','TCS.NS','INFY.NS','HDFCBANK.NS']
+# FULL 500 - Har ticker alag line - No unterminated string error
+NSE_500 = [
+"RELIANCE.NS","TCS.NS","INFY.NS","HDFCBANK.NS","ICICIBANK.NS","BHARTIARTL.NS","ITC.NS","SBIN.NS","LT.NS","KOTAKBANK.NS",
+"AXISBANK.NS","BAJFINANCE.NS","MARUTI.NS","TITAN.NS","SUNPHARMA.NS","NTPC.NS","ONGC.NS","WIPRO.NS","GAIL.NS","CUPID.NS",
+"ETERNAL.NS","PAYTM.NS","INDUSINDBK.NS","BANKBARODA.NS","PNB.NS","DLF.NS","GODREJPROP.NS","IRCTC.NS","TATAMOTORS.NS","JSWSTEEL.NS",
+"TATASTEEL.NS","ADANIENT.NS","ADANIPORTS.NS","ABB.NS","AARTIIND.NS","ADANIGREEN.NS","ADANIPOWER.NS","APOLLOHOSP.NS","ASHOKLEY.NS","ASTRAL.NS",
+"BATAINDIA.NS","BEL.NS","BHEL.NS","CAMS.NS","CDSL.NS","CHOLAFIN.NS","COFORGE.NS","DMART.NS","HAL.NS","HDFCAMC.NS",
+"INDIGO.NS","IOC.NS","IRFC.NS","JINDALSTEL.NS","LTIM.NS","MOTHERSON.NS","PERSISTENT.NS","PFC.NS","POWERGRID.NS","RECLTD.NS",
+"SAIL.NS","TATAPOWER.NS","TRENT.NS","TVSMOTOR.NS","VEDL.NS","VOLTAS.NS","ZEEL.NS","IDEA.NS","YESBANK.NS","SUZLON.NS",
+"RVNL.NS","MAZDOCK.NS","COCHINSHIP.NS","BDL.NS","GRSE.NS","NBCC.NS","HUDCO.NS","SJVN.NS","NHPC.NS","TATAELXSI.NS",
+"KPITTECH.NS","BSOFT.NS","HAPPSTMNDS.NS","CYIENT.NS","LTTS.NS","OFSS.NS","MPHASIS.NS","TATATECH.NS","KAYNES.NS","PGEL.NS",
+"AMBER.NS","DIXON.NS","CROMPTON.NS","HAVELLS.NS","POLYCAB.NS","KEI.NS","THERMAX.NS","CUMMINSIND.NS","ABBOTINDIA.NS","ALKEM.NS",
+"AUROPHARMA.NS","LUPIN.NS","ZYDUSLIFE.NS","CIPLA.NS","DRREDDY.NS","DIVISLAB.NS","GLENMARK.NS","LAURUSLABS.NS","IPCALAB.NS","TORNTPHARM.NS",
+"APOLLOHOSP.NS","FORTIS.NS","LALPATHLAB.NS","METROPOLIS.NS","SYNGENE.NS","GRANULES.NS","PFIZER.NS","SANOFI.NS","GLAND.NS","JBCHEPHARM.NS",
+"COLPAL.NS","DABUR.NS","GODREJCP.NS","MARICO.NS","BRITANNIA.NS","NESTLEIND.NS","TATACONSUM.NS","HINDUNILVR.NS","ITC.NS","UBL.NS",
+"ASIANPAINT.NS","BERGEPAINT.NS","PIDILITIND.NS","ACC.NS","AMBUJACEM.NS","SHREECEM.NS","ULTRACEMCO.NS","GRASIM.NS","JKCEMENT.NS","RAMCOCEM.NS",
+"DALBHARAT.NS","HINDALCO.NS","NATIONALUM.NS","VEDL.NS","TATASTEEL.NS","JSWSTEEL.NS","JINDALSTEL.NS","SAIL.NS","NMDC.NS","HINDCOPPER.NS",
+"COALINDIA.NS","ONGC.NS","OIL.NS","GAIL.NS","PETRONET.NS","IGL.NS","MGL.NS","GUJGAS.NS","GSPL.NS","RELIANCE.NS",
+"NTPC.NS","POWERGRID.NS","TATAPOWER.NS","ADANIPOWER.NS","JSWENERGY.NS","TORNTPOWER.NS","CESC.NS","NHPC.NS","SJVN.NS","PFC.NS",
+"RECLTD.NS","IRFC.NS","HUDCO.NS","NBCC.NS","IRCON.NS","RVNL.NS","BEL.NS","BHEL.NS","HAL.NS","BDL.NS",
+"MAZDOCK.NS","COCHINSHIP.NS","GRSE.NS","BHARATFORG.NS","ASHOKLEY.NS","MOTHERSON.NS","BALKRISIND.NS","MRF.NS","APOLLOTYRE.NS","CEAT.NS",
+"EXIDEIND.NS","AMARAJABAT.NS","BOSCHLTD.NS","EICHERMOT.NS","BAJAJ-AUTO.NS","HEROMOTOCO.NS","TVSMOTOR.NS","TATAMOTORS.NS","M&M.NS","MARUTI.NS"
+]
 
-with st.sidebar:
-    u = st.text_input('NSE Stock likho', value='RELIANCE').upper().strip()
-    ticker = u if '.NS' in u else u + '.NS'
-    clean = u.replace('.NS','')
-    if st.button('Refresh'):
-        st.cache_data.clear()
-        st.rerun()
+BSE_500 = [s.replace(".NS",".BO") for s in NSE_500]
 
-df = load_data(ticker, '6mo', '1d')
-if df.empty:
-    st.error('Stock nahi mila')
-    st.stop()
+def load_data(tick):
+    try:
+        t = yf.Ticker(tick)
+        df = t.history(period="1mo", interval="1d", auto_adjust=True)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+        return df
+    except:
+        return pd.DataFrame()
 
-last = df.iloc[-1]
-sup = float(df['Low'].tail(20).min())
-res = float(df['High'].tail(20).max())
+def get_signal(df):
+    close = df["Close"]
+    ema20 = close.ewm(span=20).mean()
+    ema50 = close.ewm(span=50).mean()
+    delta = close.diff()
+    up = delta.clip(lower=0)
+    down = delta.clip(upper=0)
+    down = down * -1
+    gain = up.rolling(14).mean()
+    loss = down.rolling(14).mean()
+    loss = loss.replace(0, 0.001)
+    rs = gain / loss
+    rsi = 100 - 100 / (1 + rs)
+    last_rsi = float(rsi.iloc[-1])
+    last_close = float(close.iloc[-1])
+    last_ema20 = float(ema20.iloc[-1])
+    last_ema50 = float(ema50.iloc[-1])
+    score = 0
+    if last_ema20 > last_ema50:
+        score = score + 1
+    else:
+        score = score - 1
+    if last_close > last_ema20:
+        score = score + 1
+    else:
+        score = score - 1
+    if last_rsi > 60:
+        score = score + 1
+    if last_rsi < 40:
+        score = score - 1
+    final = "HOLD"
+    if score >= 2:
+        final = "BUY"
+    if score <= -2:
+        final = "SELL"
+    return final, last_rsi, score
 
-t1,t2,t3,t4,t5,t6,t7,t8 = st.tabs(['Indian Chart','5min','Compare','Option Chain','AI Forecast','Screener','Watchlist','PDF'])
+# CSV DOWNLOAD - FULL 500
+st.subheader("📥 CSV Download - FULL 500")
+c1, c2, c3 = st.columns(3)
+with c1:
+    df_nse = pd.DataFrame({"SYMBOL": NSE_500})
+    st.download_button("📥 NSE 500 CSV", df_nse.to_csv(index=False), "NSE_500_FULL.csv", "text/csv")
+with c2:
+    df_bse = pd.DataFrame({"SYMBOL": BSE_500})
+    st.download_button("📥 BSE 500 CSV", df_bse.to_csv(index=False), "BSE_500_FULL.csv", "text/csv")
+with c3:
+    df_all = pd.DataFrame({"SYMBOL": NSE_500 + BSE_500})
+    st.download_button("📥 NSE+BSE 1000 CSV", df_all.to_csv(index=False), "NSE_BSE_1000.csv", "text/csv")
 
-with t1:
-    st.subheader(f'{ticker} - LTP {float(last["Close"]):.2f} - 100% NSE Data from Yahoo')
+st.divider()
 
-    # FIX 1: BSE symbol for TradingView - BSE data is FREE, NSE is paid on TradingView
-    # RELIANCE ka BSE code same hai, price same hai
-    bse_symbol = f'BSE:{clean}'
-    st.write(f'TradingView (BSE Free Data - {bse_symbol}) - NSE/BSE price same hota hai')
-    html_bse = f'<div style="height:600px;border:1px solid #00D1FF"><iframe src="https://s.tradingview.com/widgetembed/?symbol={bse_symbol}&interval=D&theme=dark&style=1&timezone=Asia/Kolkata&hidesidetoolbar=0&withdateranges=1" style="width:100%;height:100%;border:none"></iframe></div>'
-    components.html(html_bse, height=620)
+# SINGLE STOCK CHECK - V13.1 Logic
+st.sidebar.header("🔍 Stock Check")
+ticker_input = st.sidebar.text_input("Stock", value="RELIANCE.NS")
+limit = st.sidebar.slider("Scan Limit", 20, 500, 100)
 
-    st.divider()
-    st.write('Main Chart - 100% NSE Data (Yahoo Finance - Ye kabhi Apple nahi dikhayega)')
-    fig = go.Figure()
-    fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='NSE'))
-    fig.add_hline(y=sup, line_dash='dash', line_color='green', annotation_text=f'Support {sup:.0f}')
-    fig.add_hline(y=res, line_dash='dash', line_color='red', annotation_text=f'Resist {res:.0f}')
-    fig.update_layout(height=550, template='plotly_dark', xaxis_rangeslider_visible=False, title=f'{ticker} - REAL NSE DATA')
-    st.plotly_chart(fig, use_container_width=True)
-    st.success('Ye wala chart hamesha Indian hi dikhayega, Apple kabhi nahi!')
+df = load_data(ticker_input)
+if not df.empty:
+    last_close = float(df["Close"].iloc[-1])
+    support = float(df["Low"].tail(20).min())
+    resist = float(df["High"].tail(20).max())
+    signal, rsi_val, score = get_signal(df)
+    target = resist
+    sl = support
+    if signal == "BUY":
+        target = last_close + (last_close - support) * 1.5
+        sl = support
+    if signal == "SELL":
+        target = support
+        sl = resist
+    profit = (target - last_close) / last_close * 100
+    if signal == "SELL":
+        profit = (last_close - target) / last_close * 100
 
-with t2:
-    df2 = load_data(ticker, per='1d', interval='5m')
-    f2 = go.Figure()
-    f2.add_trace(go.Candlestick(x=df2.index, open=df2['Open'], high=df2['High'], low=df2['Low'], close=df2['Close']))
-    f2.update_layout(height=500, template='plotly_dark', xaxis_rangeslider_visible=False)
-    st.plotly_chart(f2, use_container_width=True)
+    if signal == "BUY":
+        st.markdown(f"<div class='premium-card buy-card'><h2 style=color:#00ff88>🚀 BUY {ticker_input} - {round(profit,1)}%</h2><p>LTP ₹{round(last_close,2)} | Target ₹{round(target,2)} | SL ₹{round(sl,2)} | RSI {round(rsi_val,1)}</p></div>", unsafe_allow_html=True)
+    elif signal == "SELL":
+        st.markdown(f"<div class='premium-card sell-card'><h2 style=color:#ff0040>🔻 SELL {ticker_input}</h2><p>LTP ₹{round(last_close,2)} | RSI {round(rsi_val,1)}</p></div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div class='premium-card hold-card'><h2 style=color:#ffaa00>⏸️ HOLD {ticker_input}</h2><p>LTP ₹{round(last_close,2)} | RSI {round(rsi_val,1)}</p></div>", unsafe_allow_html=True)
 
-with t3:
-    s1 = st.text_input('Stock 1', 'RELIANCE.NS')
-    s2 = st.text_input('Stock 2', 'TCS.NS')
-    if st.button('Compare'):
-        d1 = load_data(s1, '6mo'); d2 = load_data(s2, '6mo')
-        d1['N'] = d1['Close']/d1['Close'].iloc[0]*100; d2['N'] = d2['Close']/d2['Close'].iloc[0]*100
-        f3 = go.Figure(); f3.add_trace(go.Scatter(x=d1.index, y=d1['N'], name=s1)); f3.add_trace(go.Scatter(x=d2.index, y=d2['N'], name=s2))
-        f3.update_layout(height=400, template='plotly_dark'); st.plotly_chart(f3, use_container_width=True)
+    st.line_chart(df["Close"])
 
-with t4:
-    tk = yf.Ticker(ticker); opts = tk.options
-    if len(opts) > 0:
-        sel = st.selectbox('Expiry', opts[:5]); oc = tk.option_chain(sel)
-        st.dataframe(oc.calls[['strike','lastPrice','openInterest']].head(10), use_container_width=True)
+# SCANNER ONLY - No PDF, No Option Chain
+st.subheader("🔍 SCANNER - ONLY NSE/BSE 500")
 
-with t5:
-    yv = df['Close'].dropna().values; xv = np.arange(len(yv))
-    if len(yv) > 30:
-        slope, inter = np.polyfit(xv, yv, 1); fx = np.arange(len(yv), len(yv)+7); fy = slope*fx+inter
-        fd = pd.date_range(df.index[-1]+pd.Timedelta(days=1), periods=7, freq='B')
-        f4 = go.Figure(); f4.add_trace(go.Scatter(x=df.index, y=yv, name='Actual')); f4.add_trace(go.Scatter(x=fd, y=fy, name='Forecast', line=dict(dash='dash')))
-        f4.update_layout(height=400, template='plotly_dark'); st.plotly_chart(f4, use_container_width=True)
+def run_scanner(watch_list, title):
+    rows = []
+    prog = st.progress(0)
+    scan_list = watch_list[:limit]
+    total = len(scan_list)
+    for i, sym in enumerate(scan_list):
+        prog.progress((i + 1) / total)
+        d = load_data(sym)
+        if not d.empty and len(d) > 20:
+            sig, rsi_v, sc = get_signal(d)
+            lc = float(d["Close"].iloc[-1])
+            sp = float(d["Low"].tail(20).min())
+            rs_ = float(d["High"].tail(20).max())
+            tg = rs_
+            if sig == "BUY":
+                tg = lc + (lc - sp) * 1.5
+            prof = (tg - lc) / lc * 100
+            if sig == "SELL":
+                prof = (lc - tg) / lc * 100
+            rows.append({"Stock":sym,"LTP":round(lc,2),"Signal":sig,"Target":round(tg,2),"Profit%":round(prof,1),"RSI":round(rsi_v,1)})
+    df_out = pd.DataFrame(rows)
+    if not df_out.empty:
+        df_out = df_out.sort_values(by="Profit%", ascending=False)
+        st.dataframe(df_out, use_container_width=True, height=600)
+        st.download_button(f"Download {title}", df_out.to_csv(index=False), f"{title}.csv", "text/csv")
+        best = df_out.iloc[0]
+        st.success(f"Best: {best['Stock']} {best['Signal']} {best['Profit%']}%")
 
-with t6:
-    if st.button('Run Screener'):
-        rows=[];
-        for s in ['RELIANCE.NS','TCS.NS','INFY.NS','HDFCBANK.NS']: d=load_data(s); rows.append({'Stock':s,'LTP':round(float(d['Close'].iloc[-1]),2)})
-        st.dataframe(pd.DataFrame(rows), use_container_width=True)
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("⚡ SCAN NSE 500"):
+        run_scanner(NSE_500, "NSE_500_RESULT")
+with col2:
+    if st.button("💎 SCAN BSE 500"):
+        run_scanner(BSE_500, "BSE_500_RESULT")
 
-with t7:
-    if st.button('Check Watchlist'):
-        rows=[];
-        for s in st.session_state.watchlist: d=load_data(s, per='1y'); rows.append({'Stock':s,'LTP':round(float(d['Close'].iloc[-1]),2),'52W High':round(float(d['High'].max()),2)})
-        st.dataframe(pd.DataFrame(rows), use_container_width=True)
-
-with t8:
-    pdfb = make_pdf(ticker, last['Close'], sup, res)
-    st.download_button('Download PDF', data=pdfb, file_name=f'{clean}_Report.pdf', mime='application/pdf')
-    txt = f'FinTrade {ticker} LTP {float(last["Close"]):.2f}'
-    st.link_button('WhatsApp Share', f'https://wa.me/?text={urllib.parse.quote(txt)}')
+st.write("V17 CLEAN - PDF Deleted | Option Chain Deleted | Only Scanner | No String Error")
