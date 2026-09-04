@@ -2,9 +2,9 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title='V19.2', layout='wide')
-st.markdown('<h1 style="color:#00D1FF">FinTrade V19.2 - INDENT FIX</h1>', unsafe_allow_html=True)
-st.write('App started OK - Fixed')
+st.set_page_config(page_title='V19.3', layout='wide')
+st.markdown('<h1 style="color:#00D1FF">FinTrade V19.3 - TABLET FIX</h1>', unsafe_allow_html=True)
+st.write('V19.2 working - Now tablet glitch fixed')
 
 TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS'}
 NAME_MAP = {'ETERNAL.NS':'ZOMATO','PAYTM.NS':'PAYTM'}
@@ -73,14 +73,8 @@ st.sidebar.header('Settings')
 ticker_input = st.sidebar.text_input('Stock', value='Zomato')
 ticker = resolve_ticker(ticker_input)
 display_name = get_display_name(ticker)
-st.write('Ticker')
-st.write(ticker)
 
-with st.status('Fetching...'):
-    df = load_data(ticker)
-
-st.write('Rows')
-st.write(len(df))
+df = load_data(ticker)
 
 if df.empty:
     st.error('No data')
@@ -101,20 +95,21 @@ if signal == 'SELL':
     target_level = support_level
     stoploss_level = resist_level
 
-ltp_r = round(last_close, 2)
-tgt_r = round(target_level, 2)
-sl_r = round(stoploss_level, 2)
-rsi_r = round(rsi_val, 1)
+if signal == 'BUY': st.success('BUY ' + display_name)
+if signal == 'HOLD': st.warning('HOLD ' + display_name)
+if signal == 'SELL': st.error('SELL ' + display_name)
 
-if signal == 'BUY': st.success(signal + ' ' + display_name)
-if signal == 'HOLD': st.warning(signal + ' ' + display_name)
-if signal == 'SELL': st.error(signal + ' ' + display_name)
+st.metric('Ticker', ticker)
+st.metric('LTP', round(last_close,2))
+st.metric('Target', round(target_level,2))
+st.metric('SL', round(stoploss_level,2))
+st.metric('Support', round(support_level,2))
+st.metric('Resist', round(resist_level,2))
+st.metric('RSI', round(rsi_val,1))
+st.metric('Score', score)
+st.metric('Rows', len(df))
 
-c1 = st.columns(3)
-c1[0].metric('LTP', ltp_r)
-c1[1].metric('Target', tgt_r)
-c1[2].metric('SL', sl_r)
+st.write('Price Chart')
+st.line_chart(df['Close'])
 
-c2 = st.columns(3)
-c2[0].metric('Support', round(support_level,2))
-c2
+st.write('V19.3 OK - Tablet glitch fixed')
