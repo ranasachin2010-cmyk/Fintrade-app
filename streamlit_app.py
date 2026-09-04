@@ -2,14 +2,12 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title="V28 FIXED", layout="wide")
-st.markdown("<h1 style=color:#00D1FF>FinTrade V28.1 - FIXED</h1>", unsafe_allow_html=True)
-st.write("V27 HOLD GAIL 173.4 Success Logic")
+st.set_page_config(page_title="V15 STABLE", layout="wide")
+st.markdown("<h1 style=color:#00D1FF>FinTrade V15 - STABLE</h1>", unsafe_allow_html=True)
+st.write("V1 to V15 All Features Locked")
 
 TICKER_MAP = {"ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS","ZOM":"ETERNAL.NS","CUPID":"CUPID.NS","GAIL":"GAIL.NS"}
 NAME_MAP = {"ETERNAL.NS":"ZOMATO","PAYTM.NS":"PAYTM","CUPID.NS":"CUPID"}
-
-NIFTY50 = ["RELIANCE.NS","TCS.NS","INFY.NS","HDFCBANK.NS","ICICIBANK.NS","BHARTIARTL.NS","ITC.NS","SBIN.NS","LT.NS","KOTAKBANK.NS","GAIL.NS","CUPID.NS","ETERNAL.NS","PAYTM.NS"]
 
 def load_data(tick):
     try:
@@ -79,14 +77,16 @@ def get_signal(df):
         final = "BUY"
     if score <= -2:
         final = "SELL"
-    return final, last_rsi, score, last_ema20, last_ema50, last_macd
+    return final, last_rsi, score, last_ema20, last_ema50
 
-def run_screener(watch_list, title):
+# V15 Screener
+def run_screener():
+    watch = ["RELIANCE.NS","TCS.NS","INFY.NS","HDFCBANK.NS","ICICIBANK.NS","CUPID.NS","ETERNAL.NS","GAIL.NS"]
     rows = []
-    for sym in watch_list:
+    for sym in watch:
         d = load_data(sym)
         if not d.empty and len(d) > 20:
-            sig, rsi_v, sc, e20, e50, m = get_signal(d)
+            sig, rsi_v, sc, e20, e50 = get_signal(d)
             lc = float(d["Close"].iloc[-1])
             sp = float(d["Low"].tail(20).min())
             rs_ = float(d["High"].tail(20).max())
@@ -110,10 +110,10 @@ def run_screener(watch_list, title):
         df_out = df_out.sort_values(by="Profit%", ascending=False)
         st.dataframe(df_out, use_container_width=True)
         best = df_out.iloc[0]
-        st.success("Best Pick: " + str(best["Stock"]) + " " + str(best["Signal"]) + " Profit " + str(best["Profit%"]) + "%")
+        st.success("Best: " + str(best["Stock"]) + " " + str(best["Signal"]) + " " + str(best["Profit%"]) + "%")
 
-st.sidebar.header("Settings V28.1")
-ticker_input = st.sidebar.text_input("Stock Name", value="Gail")
+st.sidebar.header("V15 Settings")
+ticker_input = st.sidebar.text_input("Stock", value="Cupid")
 
 ticker = resolve_ticker(ticker_input)
 display_name = get_display_name(ticker)
@@ -131,44 +131,9 @@ if df.empty:
 last_close = float(df["Close"].iloc[-1])
 support_level = float(df["Low"].tail(20).min())
 resist_level = float(df["High"].tail(20).max())
-signal, rsi_val, score, ema20_val, ema50_val, macd_val = get_signal(df)
+signal, rsi_val, score, ema20_val, ema50_val = get_signal(df)
 
 target_level = resist_level
 stoploss_level = support_level
 if signal == "BUY":
-    target_level = last_close + (last_close - support_level) * 1.5
-    stoploss_level = support_level
-if signal == "SELL":
-    target_level = support_level
-    stoploss_level = resist_level
-
-profit_pct = 0
-if signal!= "SELL":
-    profit_pct = (target_level - last_close) / last_close * 100
-else:
-    profit_pct = (last_close - target_level) / last_close * 100
-
-if signal == "BUY":
-    st.success("BUY " + display_name + " | Profit " + str(round(profit_pct,1)) + "%")
-if signal == "HOLD":
-    st.warning("HOLD " + display_name + " | RSI " + str(round(rsi_val,1)))
-if signal == "SELL":
-    st.error("SELL " + display_name)
-
-st.metric("Ticker", ticker)
-st.metric("LTP", round(last_close,2))
-st.metric("Target", round(target_level,2))
-st.metric("Profit%", round(profit_pct,1))
-st.metric("SL", round(stoploss_level,2))
-st.metric("Support", round(support_level,2))
-st.metric("Resist", round(resist_level,2))
-st.metric("EMA20", round(ema20_val,2))
-st.metric("EMA50", round(ema50_val,2))
-st.metric("RSI", round(rsi_val,1))
-
-st.line_chart(df["Close"])
-
-if st.button("Run NIFTY Screener"):
-    run_screener(NIFTY50, "NIFTY Screener")
-
-st.write("V28.1 FIXED OK")
+    target_level = last_close + (last_close - support_level) *
