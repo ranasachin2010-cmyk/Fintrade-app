@@ -150,4 +150,65 @@ with tab1:
     pdf_data=create_pdf()
     col_pdf,col_wa = st.columns(2)
     with col_pdf: st.download_button("📄 Download PDF Report", data=pdf_data, file_name=f"{ticker}_report.pdf", mime="application/pdf", use_container_width=True)
-    with
+    with col_wa:
+        wa_text=urllib.parse.quote(f"{msg}\n\nFull Report: https://fintrade-app-nvfrcmhxdqux3qtqsfsd67.streamlit.app\n\nBy FinTrade V5")
+        wa_link=f"https://wa.me/?text={wa_text}"
+        st.link_button("💬 Share on WhatsApp", wa_link, use_container_width=True)
+
+# --- TAB 2: PORTFOLIO ---
+with tab2:
+    st.subheader("💼 My Portfolio Tracker - Real P&L")
+    if not st.session_state.portfolio:
+        st.info("Left sidebar se stock add karo. Eg: RELIANCE.NS, 10 Qty, Buy 1300")
+    else:
+        total_pnl=0; rows=[]
+        for item in st.session_state.portfolio:
+            try:
+                live_df = yf.download(item['Stock'], period="1d", auto_adjust=True, progress=False)
+                if isinstance(live_df.columns, pd.MultiIndex): live_df.columns = live_df.columns.get_level_values(0)
+                ltp = live_df['Close'].iloc[-1] if not live_df.empty else item['Buy']
+                pnl = (ltp - item['Buy'])*item['Qty']
+                pnl_pct = ((ltp-item['Buy'])/item['Buy'])*100
+                total_pnl+=pnl
+                rows.append({"Stock": item['Stock'], "Qty": item['Qty'], "Buy": item['Buy'], "LTP": round(float(ltp),2), "P&L": round(pnl,2), "P&L %": round(pnl_pct,2)})
+            except: rows.append({"Stock": item['Stock'], "Qty": item['Qty'], "Buy": item['Buy'], "LTP": item['Buy'], "P&L": 0, "P&L %": 0})
+        df_port = pd.DataFrame(rows)
+        st.dataframe(df_port, use_container_width=True, hide_index=True)
+        st.metric("Total Portfolio P&L", f"₹ {total_pnl:.2f}", f"{'Profit' if total_pnl>0 else 'Loss'}")
+
+# --- TAB 3: OPTION CHAIN + ALERTS ---
+with tab3:
+    c1,c2 = st.columns([2,1])
+    with c1:
+        st.subheader("🔥 Live Option Chain")
+        st.caption(f"For {ticker} - Next Expiry")
+        try:
+            tk = yf.Ticker(ticker)
+            exps = tk.options
+            if exps:
+                sel_exp = st.selectbox("Select Expiry", exps[:6])
+                oc = tk.option_chain(sel_exp)
+                st.write("**CALLS**"); st.dataframe(oc.calls[['strike','lastPrice','bid','ask','volume','openInterest']].head(10), use_container_width=True, hide_index=True)
+                st.write("**PUTS**"); st.dataframe(oc.puts[['strike','lastPrice','bid','ask','volume','openInterest']].head(10), use_container_width=True, hide_index=True)
+                # PCR
+                pcr = oc.puts['openInterest'].sum() / oc.calls['openInterest'].sum() if oc.calls['openInterest'].sum()!=0 else 0
+                st.metric("PCR (Put Call Ratio)", f"{pcr:.2f}", "Bullish" if pcr>1 else "Bearish")
+            else:
+                st.warning("Is stock ka Option Data NSE pe available nahi hai. Try RELIANCE.NS, TCS.NS, INFY.NS")
+        except Exception as e:
+            st.error(f"Option Chain load nahi hua: {e}. Try RELIANCE.NS / TCS.NS")
+    with c2:
+        st.subheader("🔔 Price Alert System")
+        st.caption("Set your target")
+        alert_price = st.number_input(f"Alert Price for {ticker}", value=float(last['Close']*1.02) if 'last' in locals() else 1000.0)
+        alert_type = st.selectbox("Alert Type", ["Price > Target", "Price < Target"])
+        if st.button("Set Alert 🚀", use_container_width=True):
+            st.success(f"Alert Set! {ticker} {alert_type} {alert_price}")
+            st.balloons()
+            if 'last' in locals():
+                if (alert_type=="Price > Target" and last['Close']>=alert_price) or (alert_type=="Price < Target" and last['Close']<=alert_price):
+                    st.error(f"🔔 ALERT TRIGGERED! {ticker} is at {last['Close']:.2f}!")
+                else:
+                    st.info(f"Current: {last['Close']:.2f}. We will notify you when it hits {alert_price}. (V6 me WhatsApp pe aayega)")
+        st.divider()
+        st.write("**Future V6:** Telegram + WhatsApp Auto Alerts")
