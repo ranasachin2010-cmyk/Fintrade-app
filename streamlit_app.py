@@ -1,4 +1,3 @@
-My BSNL No.:
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
@@ -103,19 +102,3 @@ try:
         st.write("News abhi available nahi hai is stock ke liye.")
 except:
     st.write("News load nahi ho paya.")
-
-# --- PDF REPORT ---
-def create_pdf():
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, f"FinTrade Pro V3 Report - {ticker}", ln=True, align='C')
-    pdf.set_font("Arial", '', 12)
-    pdf.ln(10)
-    pdf.cell(200, 10, f"LTP: {last['Close']:.2f} | Change: {chg:.2f} ({pct:.2f}%)", ln=True)
-    pdf.cell(200, 10, f"RSI: {last['RSI']:.1f} | SMA20: {last['SMA20']:.2f} | SMA50: {last['SMA50']:.2f}", ln=True)
-    pdf.cell(200, 10, f"Signal: {signal_text}", ln=True)
-    pdf.cell(200, 10, f"High: {last['High']:.2f} | Low: {last['Low']:.2f} | Volume: {last['Volume']:.0f}", ln=True)
-    return pdf.output(dest='S').encode('latin-1')
-
-st.download_button("📄 Download PDF Report", data=create_pdf(), file_name=f"{ticker}_report.pdf", mime="application/pdf", use_container_width=True)
