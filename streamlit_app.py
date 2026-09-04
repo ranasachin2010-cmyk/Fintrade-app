@@ -8,8 +8,8 @@ import numpy as np
 from fpdf import FPDF
 import urllib.parse
 
-st.set_page_config(page_title='FinTrade V16.1 FIXED', layout='wide')
-st.markdown('<h1 style="color:#00D1FF">💎 FinTrade V16.1 BUY SELL HOLD - FIXED</h1>', unsafe_allow_html=True)
+st.set_page_config(page_title='FinTrade V16.2', layout='wide')
+st.markdown('<h1 style="color:#00D1FF">FinTrade V16.2 BUY SELL HOLD - NO EMOJI FIX</h1>', unsafe_allow_html=True)
 
 TICKER_MAP = {
 'ZOMATO':'ETERNAL.NS',
@@ -42,48 +42,4 @@ def get_signal(df):
     gain = delta.where(delta>0,0).rolling(14).mean()
     loss = (-delta.where(delta<0,0)).rolling(14).mean()
     rs = gain / loss
-    rsi = 100 - (100/(1+rs))
-    exp1 = close.ewm(span=12).mean()
-    exp2 = close.ewm(span=26).mean()
-    macd = exp1 - exp2
-    sig = macd.ewm(span=9).mean()
-    last_rsi = float(rsi.iloc[-1])
-    last_close = float(close.iloc[-1])
-    last_ema20 = float(ema20.iloc[-1])
-    last_ema50 = float(ema50.iloc[-1])
-    last_macd = float(macd.iloc[-1])
-    last_sig = float(sig.iloc[-1])
-    score = 0
-    reasons = []
-    if last_ema20 > last_ema50:
-        score = score + 1
-        reasons.append('EMA20>EMA50')
-    else:
-        score = score - 1
-        reasons.append('EMA20<EMA50')
-    if last_close > last_ema20:
-        score = score + 1
-        reasons.append('Price>EMA20')
-    else:
-        score = score - 1
-        reasons.append('Price<EMA20')
-    if last_rsi > 60:
-        score = score + 1
-    elif last_rsi < 40:
-        score = score - 1
-    if last_macd > last_sig:
-        score = score + 1
-    else:
-        score = score - 1
-    if score >= 2:
-        final = 'BUY'
-        color = '#00FF00'
-        emoji = '🟢'
-    elif score <= -2:
-        final = 'SELL'
-        color = '#FF0000'
-        emoji = '🔴'
-    else:
-        final = 'HOLD'
-        color = '#FFD700'
-        emoji = '
+    rsi = 100 - (100/(1+
