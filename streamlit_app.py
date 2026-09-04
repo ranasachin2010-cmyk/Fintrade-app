@@ -2,9 +2,9 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title="V21 FINAL", layout="wide")
-st.markdown("<h1 style=color:#00D1FF>FinTrade V21 - FINAL PRO</h1>", unsafe_allow_html=True)
-st.write("V20.2 success - Now final")
+st.set_page_config(page_title="V21.1", layout="wide")
+st.markdown("<h1 style=color:#00D1FF>FinTrade V21.1 - SCREENER FIX</h1>", unsafe_allow_html=True)
+st.write("V20.2 working - Screener fixed")
 
 TICKER_MAP = {"ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS","ZOM":"ETERNAL.NS","RELIANCE":"RELIANCE.NS","TCS":"TCS.NS","INFY":"INFY.NS","SBIN":"SBIN.NS"}
 NAME_MAP = {"ETERNAL.NS":"ZOMATO","PAYTM.NS":"PAYTM"}
@@ -12,21 +12,17 @@ NAME_MAP = {"ETERNAL.NS":"ZOMATO","PAYTM.NS":"PAYTM"}
 def load_data(tick):
     t = yf.Ticker(tick)
     df = t.history(period="3mo", interval="1d", auto_adjust=True)
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
+    if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
     return df
 
 def resolve_ticker(u):
     uu = u.upper().strip()
-    if uu in TICKER_MAP:
-        return TICKER_MAP[uu]
-    if ".NS" in uu:
-        return uu
+    if uu in TICKER_MAP: return TICKER_MAP[uu]
+    if ".NS" in uu: return uu
     return uu + ".NS"
 
 def get_display_name(tick):
-    if tick in NAME_MAP:
-        return NAME_MAP[tick]
+    if tick in NAME_MAP: return NAME_MAP[tick]
     return tick.replace(".NS","")
 
 def get_signal(df):
@@ -67,6 +63,25 @@ def get_signal(df):
     if score >= 2: final = "BUY"
     if score <= -2: final = "SELL"
     return final, last_rsi, score, last_ema20, last_ema50
+
+def run_screener():
+    watch = ["RELIANCE.NS","TCS.NS","ETERNAL.NS","PAYTM.NS","INFY.NS","SBIN.NS"]
+    rows = []
+    for sym in watch:
+        d = load_data(sym)
+        if not d.empty:
+            sig, rsi_v, sc, e20, e50 = get_signal(d)
+            lc = float(d["Close"].iloc[-1])
+            sp = float(d["Low"].tail(20).min())
+            rs_ = float(d["High"].tail(20).max())
+            tg = rs_
+            sl = sp
+            if sig == "BUY": tg = lc + (lc - sp) * 1.5; sl = sp
+            if sig == "SELL": tg = sp; sl = rs_
+            disp = get_display_name(sym)
+            rows.append({"Stock":disp,"LTP":round(lc,2),"Signal":sig,"Target":round(tg,2),"SL":round(sl,2),"Score":sc,"RSI":round(rsi_v,1)})
+    df_out = pd.DataFrame(rows)
+    st.dataframe(df_out, use_container_width=True)
 
 st.sidebar.header("Settings")
 ticker_input = st.sidebar.text_input("Stock", value="Zomato")
@@ -121,4 +136,6 @@ st.line_chart(ema_df)
 
 st.markdown("---")
 st.subheader("One Click Screener")
-if st.button("Run Screener"):
+if st.button("Run Screener"): run_screener()
+
+st.write("V21.1 OK")
