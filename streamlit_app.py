@@ -2,17 +2,17 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title='V20 FINAL', layout='wide')
-st.markdown('<h1 style="color:#00D1FF">FinTrade V20 - FINAL PRO</h1>', unsafe_allow_html=True)
-st.write('V19.3 success - Now Final Version')
+st.set_page_config(page_title="V20.1", layout="wide")
+st.markdown("<h1 style=color:#00D1FF>FinTrade V20.1 - QUOTE FIX</h1>", unsafe_allow_html=True)
+st.write("App started OK")
 
-TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS','ZOM':'ETERNAL.NS','RELIANCE':'RELIANCE.NS','TCS':'TCS.NS','INFY':'INFY.NS'}
-NAME_MAP = {'ETERNAL.NS':'ZOMATO','PAYTM.NS':'PAYTM'}
+TICKER_MAP = {"ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS"}
+NAME_MAP = {"ETERNAL.NS":"ZOMATO","PAYTM.NS":"PAYTM"}
 
 @st.cache_data(ttl=300)
 def load_data(tick):
     t = yf.Ticker(tick)
-    df = t.history(period='3mo', interval='1d', auto_adjust=True)
+    df = t.history(period="3mo", interval="1d", auto_adjust=True)
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
     return df
@@ -21,17 +21,17 @@ def resolve_ticker(u):
     uu = u.upper().strip()
     if uu in TICKER_MAP:
         return TICKER_MAP[uu]
-    if '.NS' in uu:
+    if ".NS" in uu:
         return uu
-    return uu + '.NS'
+    return uu + ".NS"
 
 def get_display_name(tick):
     if tick in NAME_MAP:
         return NAME_MAP[tick]
-    return tick.replace('.NS','')
+    return tick.replace(".NS","")
 
 def get_signal(df):
-    close = df['Close']
+    close = df["Close"]
     ema20 = close.ewm(span=20).mean()
     ema50 = close.ewm(span=50).mean()
     delta = close.diff()
@@ -64,49 +64,7 @@ def get_signal(df):
     if last_rsi < 40: score = score - 1
     if last_macd > last_sig: score = score + 1
     if last_macd < last_sig: score = score - 1
-    final = 'HOLD'
-    if score >= 2: final = 'BUY'
-    if score <= -2: final = 'SELL'
-    return final, last_rsi, score, last_ema20, last_ema50
-
-st.sidebar.header('Settings')
-ticker_input = st.sidebar.text_input('Stock', value='Zomato')
-ticker = resolve_ticker(ticker_input)
-display_name = get_display_name(ticker)
-
-df = load_data(ticker)
-if df.empty:
-    st.error('No data')
-    st.stop()
-
-last_close = float(df['Close'].iloc[-1])
-support_level = float(df['Low'].tail(20).min())
-resist_level = float(df['High'].tail(20).max())
-signal, rsi_val, score, ema20_val, ema50_val = get_signal(df)
-
-target_level = resist_level
-stoploss_level = support_level
-if signal == 'BUY':
-    diff = last_close - support_level
-    target_level = last_close + diff * 1.5
-    stoploss_level = support_level
-if signal == 'SELL':
-    target_level = support_level
-    stoploss_level = resist_level
-
-if signal == 'BUY': st.success('BUY ' + display_name)
-if signal == 'HOLD': st.warning('HOLD ' + display_name)
-if signal == 'SELL': st.error('SELL ' + display_name)
-
-st.metric('Ticker', ticker)
-st.metric('LTP', round(last_close,2))
-st.metric('Target', round(target_level,2))
-st.metric('SL', round(stoploss_level,2))
-st.metric('Support', round(support_level,2))
-st.metric('Resist', round(resist_level,2))
-st.metric('RSI', round(rsi_val,1))
-st.metric('EMA20', round(ema20_val,2))
-st.metric('EMA50', round(ema50_val,2))
-st.metric('Score', score)
-
-st.write('Price Chart - 3 Months
+    final = "HOLD"
+    if score >= 2: final = "BUY"
+    if score <= -2: final = "SELL"
+    return final, last
