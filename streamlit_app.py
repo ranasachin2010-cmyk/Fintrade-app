@@ -4,10 +4,10 @@ import plotly.graph_objects as go
 from plotly.graph_objects import Candlestick, Scatter
 import pandas as pd
 
-st.set_page_config(page_title='V17.1 FIXED', layout='wide')
-st.markdown('<h1 style="color:#00D1FF">FinTrade V17.1 - SIGNAL + TARGET + SL - FIXED</h1>', unsafe_allow_html=True)
+st.set_page_config(page_title='V17.2 FIX', layout='wide')
+st.markdown('<h1 style="color:#00D1FF">FinTrade V17.2 FIXED</h1>', unsafe_allow_html=True)
 
-TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS','IRCTC':'IRCTC.NS'}
+TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS'}
 
 @st.cache_data(ttl=300)
 def load_data(tick):
@@ -78,11 +78,10 @@ def get_signal(df):
 
 ticker_input = st.sidebar.text_input('NSE Stock', value='Zomato')
 ticker = resolve_ticker(ticker_input)
-st.sidebar.write('Resolved: ' + ticker)
 
 df = load_data(ticker)
 if df.empty:
-    st.error('No data for ' + ticker)
+    st.error('No data')
     st.stop()
 
 last_close = float(df['Close'].iloc[-1])
@@ -100,17 +99,16 @@ if signal == 'SELL':
     target = sup
     stoploss = res
 
-# SHOW CARDS - Always visible
-st.markdown('<div style="background:' + color + ';padding:20px;border-radius:15px;text-align:center"><h1 style="color:black;margin:0">' + signal + ' ' + ticker + '</h1><p style="color:black">Score ' + str(score) + ' RSI ' + str(round(rsi_val,1)) + ' LTP ' + str(round(last_close,2)) + '</p></div>', unsafe_allow_html=True)
+# CARD - SAFE
+html1 = '<div style="background:' + color + ';padding:20px;border-radius:15px;text-align:center"><h1 style="color:black">' + signal + ' ' + ticker + '</h1></div>'
+st.markdown(html1, unsafe_allow_html=True)
+st.write('Score ' + str(score) + ' RSI ' + str(round(rsi_val,1)) + ' LTP ' + str(round(last_close,2)))
+st.write('Target ' + str(round(target,2)) + ' SL ' + str(round(stoploss,2)))
 
-colA, colB, colC = st.columns(3)
-colA.metric('Target', str(round(target,2)))
-colB.metric('Stoploss', str(round(stoploss,2)))
-colC.metric('Support/Resist', str(round(sup,2)) + ' / ' + str(round(res,2)))
-
-# CHART
+# CHART - NO NESTED BRACKETS - FULL FIX
 xs = df.index
 fig = go.Figure()
+
 cs = Candlestick()
 cs.x = xs
 cs.open = df['Open']
@@ -118,8 +116,62 @@ cs.high = df['High']
 cs.low = df['Low']
 cs.close = df['Close']
 fig.add_trace(cs)
-fig.add_trace(Scatter(x=xs, y=[sup]*len(xs), mode='lines', line=dict(color='green', dash='dash'), name='Support'))
-fig.add_trace(Scatter(x=xs, y=[res]*len(xs), mode='lines', line=dict(color='red', dash='dash'), name='Resist'))
-fig.add_trace(Scatter(x=xs, y=[target]*len(xs), mode='lines', line=dict(color='lime', width=2), name='Target'))
-fig.add_trace(Scatter(x=xs, y=[stoploss]*len(xs), mode='lines', line=dict(color='orange', width=2), name='SL'))
-fig.add_trace(Scatter(x=xs, y=df
+
+# Support line
+s1 = Scatter()
+s1.x = xs
+s1.y = [sup]*len(xs)
+s1.mode = 'lines'
+s1.name = 'Support'
+s1.line = dict(color='green', dash='dash')
+fig.add_trace(s1)
+
+# Resist line
+s2 = Scatter()
+s2.x = xs
+s2.y = [res]*len(xs)
+s2.mode = 'lines'
+s2.name = 'Resist'
+s2.line = dict(color='red', dash='dash')
+fig.add_trace(s2)
+
+# Target line
+s3 = Scatter()
+s3.x = xs
+s3.y = [target]*len(xs)
+s3.mode = 'lines'
+s3.name = 'Target'
+s3.line = dict(color='lime', width=2)
+fig.add_trace(s3)
+
+# SL line
+s4 = Scatter()
+s4.x = xs
+s4.y = [stoploss]*len(xs)
+s4.mode = 'lines'
+s4.name = 'SL'
+s4.line = dict(color='orange', width=2)
+fig.add_trace(s4)
+
+# EMA20
+s5 = Scatter()
+s5.x = xs
+s5.y = df['Close'].ewm(span=20).mean()
+s5.mode = 'lines'
+s5.name = 'EMA20'
+s5.line = dict(color='yellow')
+fig.add_trace(s5)
+
+# EMA50
+s6 = Scatter()
+s6.x = xs
+s6.y = df['Close'].ewm(span=50).mean()
+s6.mode = 'lines'
+s6.name = 'EMA50'
+s6.line = dict(color='cyan')
+fig.add_trace(s6)
+
+fig.update_layout(height=600, template='plotly_dark')
+fig.update_xaxes(rangeslider_visible=False)
+st.plotly_chart(fig, use_container_width=True)
+st.success('V17.2 Loaded OK')
