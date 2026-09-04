@@ -2,11 +2,11 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title='V19.3', layout='wide')
-st.markdown('<h1 style="color:#00D1FF">FinTrade V19.3 - TABLET FIX</h1>', unsafe_allow_html=True)
-st.write('V19.2 working - Now tablet glitch fixed')
+st.set_page_config(page_title='V20 FINAL', layout='wide')
+st.markdown('<h1 style="color:#00D1FF">FinTrade V20 - FINAL PRO</h1>', unsafe_allow_html=True)
+st.write('V19.3 success - Now Final Version')
 
-TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS'}
+TICKER_MAP = {'ZOMATO':'ETERNAL.NS','PAYTM':'PAYTM.NS','ZOM':'ETERNAL.NS','RELIANCE':'RELIANCE.NS','TCS':'TCS.NS','INFY':'INFY.NS'}
 NAME_MAP = {'ETERNAL.NS':'ZOMATO','PAYTM.NS':'PAYTM'}
 
 @st.cache_data(ttl=300)
@@ -67,7 +67,7 @@ def get_signal(df):
     final = 'HOLD'
     if score >= 2: final = 'BUY'
     if score <= -2: final = 'SELL'
-    return final, last_rsi, score
+    return final, last_rsi, score, last_ema20, last_ema50
 
 st.sidebar.header('Settings')
 ticker_input = st.sidebar.text_input('Stock', value='Zomato')
@@ -75,7 +75,6 @@ ticker = resolve_ticker(ticker_input)
 display_name = get_display_name(ticker)
 
 df = load_data(ticker)
-
 if df.empty:
     st.error('No data')
     st.stop()
@@ -83,7 +82,7 @@ if df.empty:
 last_close = float(df['Close'].iloc[-1])
 support_level = float(df['Low'].tail(20).min())
 resist_level = float(df['High'].tail(20).max())
-signal, rsi_val, score = get_signal(df)
+signal, rsi_val, score, ema20_val, ema50_val = get_signal(df)
 
 target_level = resist_level
 stoploss_level = support_level
@@ -106,10 +105,8 @@ st.metric('SL', round(stoploss_level,2))
 st.metric('Support', round(support_level,2))
 st.metric('Resist', round(resist_level,2))
 st.metric('RSI', round(rsi_val,1))
+st.metric('EMA20', round(ema20_val,2))
+st.metric('EMA50', round(ema50_val,2))
 st.metric('Score', score)
-st.metric('Rows', len(df))
 
-st.write('Price Chart')
-st.line_chart(df['Close'])
-
-st.write('V19.3 OK - Tablet glitch fixed')
+st.write('Price Chart - 3 Months
