@@ -5,18 +5,14 @@ import plotly.graph_objects as go
 from plotly.graph_objects import Candlestick, Scatter
 import pandas as pd
 import numpy as np
-from fpdf import FPDF
-import urllib.parse
 
-st.set_page_config(page_title='FinTrade V16.2', layout='wide')
-st.markdown('<h1 style="color:#00D1FF">FinTrade V16.2 BUY SELL HOLD - NO EMOJI FIX</h1>', unsafe_allow_html=True)
+st.set_page_config(page_title='V16.3', layout='wide')
+st.markdown('<h1 style="color:#00D1FF">FinTrade V16.3 BUY SELL HOLD</h1>', unsafe_allow_html=True)
 
 TICKER_MAP = {
 'ZOMATO':'ETERNAL.NS',
-'ETERNAL':'ETERNAL.NS',
 'PAYTM':'PAYTM.NS',
-'IRCTC':'IRCTC.NS',
-'LIC':'LICI.NS'
+'IRCTC':'IRCTC.NS'
 }
 
 @st.cache_data(ttl=300)
@@ -39,7 +35,41 @@ def get_signal(df):
     ema20 = close.ewm(span=20).mean()
     ema50 = close.ewm(span=50).mean()
     delta = close.diff()
-    gain = delta.where(delta>0,0).rolling(14).mean()
-    loss = (-delta.where(delta<0,0)).rolling(14).mean()
+    # gain loss - NO NESTED BRACKET
+    up = delta.clip(lower=0)
+    down = delta.clip(upper=0)
+    down = down * -1
+    gain = up.rolling(14).mean()
+    loss = down.rolling(14).mean()
+    # RSI - NO NESTED BRACKET - 3 steps
     rs = gain / loss
-    rsi = 100 - (100/(1+
+    den = 1 + rs
+    div = 100 / den
+    rsi = 100 - div
+    exp1 = close.ewm(span=12).mean()
+    exp2 = close.ewm(span=26).mean()
+    macd = exp1 - exp2
+    sig = macd.ewm(span=9).mean()
+    last_rsi = float(rsi.iloc[-1])
+    last_close = float(close.iloc[-1])
+    last_ema20 = float(ema20.iloc[-1])
+    last_ema50 = float(ema50.iloc[-1])
+    last_macd = float(macd.iloc[-1])
+    last_sig = float(sig.iloc[-1])
+    score = 0
+    reasons = []
+    if last_ema20 > last_ema50:
+        score = score + 1
+        reasons.append('EMA20>EMA50 BULL')
+    else:
+        score = score - 1
+        reasons.append('EMA20<EMA50 BEAR')
+    if last_close > last_ema20:
+        score = score + 1
+        reasons.append('Price>EMA20')
+    else:
+        score = score - 1
+        reasons.append('Price<EMA20')
+    if last_rsi > 60:
+        score = score + 1
+    elif
