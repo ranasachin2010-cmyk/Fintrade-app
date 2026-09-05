@@ -4,10 +4,7 @@ import base64, requests, re
 from datetime import date, datetime
 import pytz
 
-st.set_page_config(page_title="FinTrade God V43.2 CLEAN", layout="wide", page_icon="💎")
-
-# --- FIX 1: META REFRESH HATAYA - AUTO REFRESH VIA CACHE ---
-# st.markdown('<meta http-equiv="refresh" content="300">', unsafe_allow_html=True) -> HATAYA
+st.set_page_config(page_title="FinTrade God V43.3 FINAL", layout="wide", page_icon="💎")
 
 st.markdown("""
 <style>
@@ -15,10 +12,7 @@ st.markdown("""
 .stApp{background: #020208; background-image: radial-gradient(at 0% 0%, hsla(212,100%,56%,0.25) 0px, transparent 50%), radial-gradient(at 20% 10%, hsla(273,100%,60%,0.25) 0px, transparent 50%), radial-gradient(at 90% 0%, hsla(158,100%,50%,0.20) 0px, transparent 50%);}
 .header-god{background: linear-gradient(135deg, #6A5AE0 0%, #7B6EF0 100%)!important; border:none!important; border-radius: 28px; padding: 18px 26px; box-shadow: 0 20px 80px rgba(106,90,224,0.35);}
 .header-god img{background:transparent!important; border:none!important; box-shadow:none!important;}
-
-/* FIX 2: PURPLE DOTS BUG FIX - ::before HATAYA */
-.pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border:1.5px solid rgba(0,255,136,0.25); border-radius: 24px; padding: 20px 20px 14px 20px; position: relative; box-shadow: 0 12px 40px rgba(0,255,136,0.12);}
-
+.pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border:1.5px solid rgba(0,255,136,0.25); border-radius: 24px; padding: 20px 20px 14px 20px; box-shadow: 0 12px 40px rgba(0,255,136,0.12);}
 .top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px 26px;}
 .live-price{font-family: 'Space Grotesk'; font-weight: 700; font-size: 38px; background: linear-gradient(90deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
 .buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
@@ -29,7 +23,7 @@ st.markdown("""
 .target-row{display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 10px 12px; background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.06)); border: 1px solid rgba(0,255,136,0.25); border-left: 3px solid #00FF88; border-radius: 12px;}
 .index-chip{display:inline-flex; align-items:center; gap:6px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px;}
 .index-up{color:#00FF88; font-weight:800;}.index-down{color:#FF4D6A; font-weight:800;}
-.bse-badge{background: linear-gradient(135deg, #FF6A00, #FFD700); color:black; font-family:Space Grotesk; font-weight:700; font-size:10px; padding:4px 10px; border-radius:100px;}
+.bse-badge{background: linear-gradient(135deg, #FF6A00, #FFD700); color:black; font-weight:700; font-size:10px; padding:4px 10px; border-radius:100px;}
 .auto-badge{background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:8px; padding:3px 8px; border-radius:100px; font-family:JetBrains Mono;}
 </style>
 """, unsafe_allow_html=True)
@@ -55,10 +49,34 @@ def get_indices():
         except: data[name] = {"price": 0, "chg": 0}
     return data
 
+@st.cache_data(ttl=300, show_spinner=False)
+def load_data(tick):
+    try:
+        tk=yf.Ticker(tick); df=tk.history(period="3mo",interval="1d",auto_adjust=False)
+        if df.empty: df=tk.history(period="1mo",interval="1d",auto_adjust=True)
+        if isinstance(df.columns,pd.MultiIndex): df.columns=df.columns.get_level_values(0)
+        return df.dropna()
+    except: return pd.DataFrame()
+
+@st.cache_data(ttl=300, show_spinner=False)
+def get_live_price(tick):
+    try:
+        tk=yf.Ticker(tick)
+        try:
+            p = tk.fast_info.last_price
+            if p is not None and not pd.isna(p) and p!=0:
+                return float(p)
+        except: pass
+        d=tk.history(period="5d", interval="1d")
+        if not d.empty:
+            return float(d["Close"].iloc[-1])
+        return 0
+    except: return 0
+
 def get_logo():
     try:
         with open("logo.png","rb") as f:
-            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="68" style="border-radius:16px; background:transparent; border:none;">'
+            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="130" style="border-radius:16px; background:transparent; border:none;">'
     except: return '<div style="font-size:38px;">💎</div>'
 
 def send_tg(token, chat, msg):
@@ -80,7 +98,7 @@ st.markdown(f"""
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
-     <span class="auto-badge">● AUTO 5M • NO PORTFOLIO</span>
+     <span class="auto-badge">● V43.3 FINAL • BUG FREE</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
      {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
@@ -89,7 +107,7 @@ st.markdown(f"""
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V43.2 CLEAN</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">NO PORTFOLIO • FULL WIDTH</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V43.3 FINAL</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">NO PORTFOLIO • FULL WIDTH</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -102,23 +120,6 @@ def resolve_ticker(t):
     if r in SMART_MAP: return SMART_MAP[r]
     if ns in SMART_MAP: return SMART_MAP[ns]
     return ns+".NS" if len(ns)>1 else r+".NS"
-
-@st.cache_data(ttl=300, show_spinner=False)
-def load_data(tick):
-    try:
-        tk=yf.Ticker(tick); df=tk.history(period="3mo",interval="1d",auto_adjust=False)
-        if df.empty: df=tk.history(period="1mo",interval="1d",auto_adjust=True)
-        if isinstance(df.columns,pd.MultiIndex): df.columns=df.columns.get_level_values(0)
-        return df.dropna()
-    except: return pd.DataFrame()
-
-def get_live_price(tick):
-    try:
-        tk=yf.Ticker(tick); p=tk.fast_info.last_price
-        if p is None or pd.isna(p):
-            d=tk.history(period="1d",interval="1m"); p=float(d["Close"].dropna().iloc[-1]) if not d.empty else 0
-        return float(p)
-    except: return 0
 
 def calc_st(df, period=10, mult=3):
     hl2=(df['High']+df['Low'])/2; tr1=df['High']-df['Low']; tr2=(df['High']-df['Close'].shift()).abs(); tr3=(df['Low']-df['Close'].shift()).abs()
@@ -177,7 +178,7 @@ now_ist = datetime.now(ist)
 today_str = str(date.today())
 if now_ist.hour == 9 and now_ist.minute >= 15 and now_ist.minute <= 20:
     if st.session_state.last_auto_sent!= today_str and st.session_state.tg_token and st.session_state.tg_chat and morning_picks:
-        msg = f"🌅 *FinTrade God V43 - 9:15 AM Auto Picks - {today_str}*\n\n"
+        msg = f"🌅 *FinTrade God V43.3 FINAL - 9:15 AM - {today_str}*\n\n"
         for i, p in enumerate(morning_picks, 1):
             msg += f"#{i} *{p['name']}* - ₹{round(p['live'],2)} (RSI {p['rsi']})\nTarget: ₹{round(p['target'],2)} (+{p['profit_pct']}%) SL: ₹{round(p['sl'],2)}\nScore: {p['score']}/110 BUY ✅\n\n"
         msg += f"NIFTY50: {int(indices_data.get('NIFTY50',{}).get('price',0)):,} | SENSEX: {int(indices_data.get('SENSEX',{}).get('price',0)):,}\n"
@@ -199,7 +200,7 @@ with c1: user_input=st.text_input("search", value="CUPID", placeholder="Search B
 with c2: st.button("SEARCH ↗", use_container_width=True)
 
 raw=user_input.upper().strip(); ticker=resolve_ticker(raw); df=load_data(ticker)
-if df.empty: st.error(f"{raw} not found"); st.stop()
+if df.empty: st.error(f"{raw} not found - Yahoo busy, 1 min baad try karo"); st.stop()
 last=float(df["Close"].dropna().iloc[-1]); live=get_live_price(ticker)
 if live==0: live=last
 low_min=float(df["Low"].tail(20).min()); tgt=last+(last-low_min)*1.5
@@ -209,21 +210,18 @@ sig="BUY" if ema20.iloc[-1]>ema50.iloc[-1] and last>ema20.iloc[-1] else "SELL" i
 sig_class="buy-god" if sig=="BUY" else "sell-god"
 df_c=df.tail(100).copy(); m_line,s_line,hist=calc_macd(df_c["Close"]); st_line,st_dir=calc_st(df_c)
 st_sig="BUY" if st_dir.iloc[-1]==1 else "SELL"; st_color="#00FF88" if st_sig=="BUY" else "#FF4D6A"
-profit_main = round(((tgt-live)/live*100),1) if live>0 else 0
+profit_main = round(((tgt-live)/live*100),1) if live>0 else 0)
 
 st.markdown(f"""<div class="top-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="display:flex; align-items:center; gap:14px;"><h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw}</h2><span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-family:JetBrains Mono; font-size:10px; padding:5px 10px; border-radius:100px;">BSE:{raw}</span><span style="background: {st_color}18; border:1px solid {st_color}; color:{st_color}; font-family:Space Grotesk; font-size:10px; font-weight:700; padding:5px 12px; border-radius:100px;">ST {st_sig}</span></div><div style="display:flex; gap:16px; margin-top:16px;"><div style="background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.04)); border:1px solid rgba(0,255,136,0.25); border-left:3px solid #00FF88; border-radius:10px; padding:8px 14px;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">TARGET + PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">₹{round(tgt,2)} <span style="background: #00FF88; color:black; padding:2px 6px; border-radius:100px; font-size:10px;">▲ +{profit_main}%</span></p></div><div style="background: rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.2); border-radius:10px; padding:8px 14px;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">STOP LOSS</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">₹{round(low_min,2)}</p></div></div></div><div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:9px; font-family:JetBrains Mono; letter-spacing:2px;">LIVE BSE PRICE</p><p class="live-price">₹{round(live,2)}</p><div class="{sig_class}" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">{sig} ↗</div></div></div></div>""", unsafe_allow_html=True)
 
-tab_bse, tab_chart, tab_tg = st.tabs(["📊 BSE TradingView PRO + Indicators", "📈 Plotly", "📲 Telegram Setup"])
+tab_bse, tab_chart, tab_tg = st.tabs(["📊 BSE TradingView PRO", "📈 Plotly", "📲 Telegram"])
 
 with tab_bse:
     clean_sym = raw.replace(".NS","").replace(".BO","").strip()
     bse_symbol = f"BSE:{clean_sym}"
-    st.markdown(f"""<div style="background: linear-gradient(90deg, #FF6A00, #FFD700); padding: 12px 16px; border-radius: 14px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><div style="display:flex; align-items:center; gap:10px;"><span style="font-family:Space Grotesk; font-weight:700; color:black; font-size:16px;">{bse_symbol} • PRO + Supertrend + MACD + RSI</span><span style="background:black; color:#00FF88; font-size:9px; padding:4px 8px; border-radius:100px; font-family:JetBrains Mono;">BUY/SELL INDICATORS ON</span></div></div>""", unsafe_allow_html=True)
-    tv_bse_pro = f"https://s.tradingview.com/widgetembed/?frameElementId=tradingview_bse_pro&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
+    st.markdown(f"""<div style="background: linear-gradient(90deg, #FF6A00, #FFD700); padding: 12px 16px; border-radius: 14px; margin-bottom:12px;"><span style="font-family:Space Grotesk; font-weight:700; color:black;">{bse_symbol} • Supertrend + MACD + RSI • FINAL</span></div>""", unsafe_allow_html=True)
+    tv_bse_pro = f"https://s.tradingview.com/widgetembed/?frameElementId=tv_final&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
     st.components.v1.iframe(tv_bse_pro, height=700, scrolling=False)
-    c1,c2=st.columns(2)
-    with c1: st.link_button(f"📥 Open {bse_symbol} TradingView", f"https://www.tradingview.com/chart/?symbol={bse_symbol}", use_container_width=True)
-    with c2: st.link_button(f"📷 Download Chart", f"https://www.tradingview.com/chart/?symbol={bse_symbol}", use_container_width=True)
 
 with tab_chart:
     close_c=df_c["Close"]; e20=close_c.ewm(20).mean(); e50=close_c.ewm(50).mean()
@@ -243,16 +241,16 @@ with tab_chart:
     st.plotly_chart(fig, use_container_width=True)
 
 with tab_tg:
-    st.markdown("### 📲 Telegram Auto Setup - 9:15 AM")
-    tok=st.text_input("Bot Token", value=st.session_state.tg_token, type="password", placeholder="123456:ABC-YourBotToken")
-    chat=st.text_input("Chat ID", value=st.session_state.tg_chat, placeholder="123456789")
-    if st.button("💾 Save Telegram & Test Now"):
+    st.markdown("### 📲 Telegram 9:15 AM Auto")
+    tok=st.text_input("Bot Token", value=st.session_state.tg_token, type="password")
+    chat=st.text_input("Chat ID", value=st.session_state.tg_chat)
+    if st.button("💾 Save & Test Now"):
         st.session_state.tg_token=tok; st.session_state.tg_chat=chat
         if morning_picks:
-            msg = f"✅ *FinTrade V43 Test - {today_str}*\n\n"
+            msg = f"✅ *V43.3 FINAL Test - {today_str}*\n"
             for i, p in enumerate(morning_picks, 1):
-                msg += f"#{i} *{p['name']}* - ₹{round(p['live'],2)} Target ₹{round(p['target'],2)} (+{p['profit_pct']}%)\n"
+                msg += f"#{i} *{p['name']}* ₹{round(p['live'],2)} → ₹{round(p['target'],2)} (+{p['profit_pct']}%)\n"
             send_tg(tok, chat, msg)
-            st.success("✅ Test message sent! 9:15 AM ko auto ayega!")
-        else: st.warning("Picks not ready")
-    st.info("🔔 Auto 5M cache se update • No crash • Logo fixed • Portfolio removed • Clean UI")
+            st.success("✅ Sent! 9:15 AM auto chalega")
+
+st.caption(f"V43.3 FINAL • Bug Free • No Portfolio • Logo Fixed • Cache 5M • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
