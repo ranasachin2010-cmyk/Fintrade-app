@@ -1,12 +1,17 @@
-# FinTrade V48.1 FINAL LOCKED + AI - DO NOT EDIT AFTER 06 SEP 2026
-# LOCKED FEATURES: AI 96% Model + Bear Protection + Portfolio Tracker
+# FinTrade V48.6 FINAL LOCKED + AI - DO NOT EDIT AFTER 06 SEP 2026
+# LOCKED FEATURES: AI 96% Model + Bear Protection + Portfolio Tracker + Zero Warning
+import warnings
+warnings.filterwarnings("ignore")
+import logging
+logging.getLogger("yfinance").setLevel(logging.CRITICAL)
+
 import streamlit as st, yfinance as yf, pandas as pd
 import base64, re, json, os
 from datetime import date, datetime, timedelta
 import pytz, numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-st.set_page_config(page_title="FinTrade V48.1 FINAL LOCKED", layout="wide", page_icon="🔒")
+st.set_page_config(page_title="FinTrade V48.6 FINAL LOCKED", layout="wide", page_icon="🔒")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
@@ -58,7 +63,7 @@ def load_data(tick, period="6mo"):
 def get_logo():
     try:
         with open("logo.png","rb") as f:
-            import base64; return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="130" style="border-radius:22px;">'
+            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="130" style="border-radius:22px;">'
     except: return '<div style="font-size:38px;">🔒</div>'
 
 def calc_st(df):
@@ -193,7 +198,7 @@ st.markdown(f"""
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
-     <span class="auto-badge">🔒 V48.1 FINAL LOCKED</span>
+     <span class="auto-badge">🔒 V48.6 FINAL LOCKED</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
      {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
@@ -201,7 +206,7 @@ st.markdown(f"""
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V48.1 FINAL</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">LOCKED</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V48.6 FINAL</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">LOCKED</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -236,9 +241,9 @@ morning_picks=get_morning_picks()
 win30,wins30,total30,history_results=evaluate_portfolio()
 
 if total30>0:
-    st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🔒 V48.1 FINAL LOCKED - LAST 30 DAYS</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • AI Model</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">LOCKED</div></div></div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🔒 V48.6 FINAL LOCKED - LAST 30 DAYS</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • AI Model</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">LOCKED</div></div></div></div>""", unsafe_allow_html=True)
 else:
-    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V48.1 FINAL LOCKED! {market_msg} - AI 60%+ filter active hai. Aaj strong pick nahi mila toh loss se bacha liya. Yehi AI ka power hai!</div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V48.6 FINAL LOCKED! {market_msg} - AI 60%+ filter active hai. Aaj strong pick nahi mila toh loss se bacha liya. Yehi AI ka power hai!</div></div>""", unsafe_allow_html=True)
 
 if morning_picks:
     c1,c2=st.columns(2)
@@ -269,7 +274,7 @@ if morning_picks:
             </div>
             """, unsafe_allow_html=True)
 else:
-    st.info(f"🔒 AI Protected! {market_msg} - AI ne 60% se kam wale saare stocks cut kar diye. Aaj koi strong pick nahi - Loss se bachao! Yehi V48.1 ka power hai.")
+    st.info(f"🔒 AI Protected! {market_msg} - AI ne 60% se kam wale saare stocks cut kar diye. Aaj koi strong pick nahi - Loss se bachao! Yehi V48.6 ka power hai.")
 
 c1,c2=st.columns([5.2,1])
 with c1: user_input=st.text_input("search",value="CUPID",placeholder="Search...",label_visibility="collapsed")
@@ -311,7 +316,7 @@ tab1,tab2=st.tabs(["📊 BSE Chart","🏆 Final Locked History"])
 with tab1:
     bse_symbol=f"BSE:{raw.replace('.NS','').strip()}"
     tv=f"https://s.tradingview.com/widgetembed/?frameElementId=tv_final&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies%2CADX%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
-    st.components.v1.iframe(tv,height=650,scrolling=False)
+    st.components.v1.html(f'<iframe src="{tv}" style="width:100%; height:650px; border:none;" scrolling="no"></iframe>', height=660)
 with tab2:
     if history_results:
         st.markdown(f"### 🔒 Final Locked History - {win30}% Win ({wins30}/{total30})")
@@ -319,6 +324,6 @@ with tab2:
             color="#00FF88" if h["status"]=="WIN" else "#FF4D6A" if h["status"]=="LOSS" else "#FFD700"
             st.markdown(f"""<div style="background: rgba(255,255,255,0.05); border-left: 3px solid {color}; border-radius: 10px; padding: 10px 14px; margin-bottom:8px; display:flex; justify-content:space-between;"><div><span style="color:white; font-family:Space Grotesk; font-weight:700;">{h['name']}</span> <span style="color:#8892b0; font-size:11px;">{h['date']}</span> • 🤖 {h.get('ai',0)}% • Rs{h['entry']} → Rs{h['target']} <span style="color:{color}; font-weight:700;">{h['status']}</span></div><div style="color:#FFD700; font-family:JetBrains Mono; font-size:11px;">+{h['profit_pct']}%</div></div>""", unsafe_allow_html=True)
     else:
-        st.info("🔒 V48.1 Final Locked Tracking Started! 7 din baad real win rate yaha dikhega.")
+        st.info("🔒 V48.6 Final Locked Tracking Started! 7 din baad real win rate yaha dikhega.")
 
-st.caption(f"🔒 V48.1 FINAL LOCKED • AI 80 Trees • No More Edits • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+st.caption(f"🔒 V48.6 FINAL LOCKED • AI 80 Trees • Zero Warning • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
