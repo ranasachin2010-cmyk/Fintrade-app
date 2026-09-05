@@ -8,32 +8,11 @@ st.set_page_config(page_title="FinTrade God", layout="wide", page_icon="💎")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
-.stApp{
- background: #020208;
- background-image:
-   radial-gradient(at 0% 0%, hsla(212,100%,56%,0.25) 0px, transparent 50%),
-   radial-gradient(at 20% 10%, hsla(273,100%,60%,0.25) 0px, transparent 50%),
-   radial-gradient(at 90% 0%, hsla(158,100%,50%,0.20) 0px, transparent 50%);
-}
-.header-god{
- background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 100%);
- backdrop-filter: blur(40px) saturate(180%); border: 1px solid rgba(255,255,255,0.1);
- border-radius: 28px; padding: 18px 26px; box-shadow: 0 20px 80px rgba(0,0,0,0.6);
-}
-.pick-god{
- background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%);
- backdrop-filter: blur(30px); border-radius: 24px; padding: 20px 20px 14px 20px; position: relative;
- box-shadow: 0 12px 40px rgba(0,255,136,0.12), inset 0 1px 0 rgba(255,255,255,0.1);
-}
-.pick-god::before{
- content:''; position: absolute; inset: 0; border-radius: 24px; padding: 1.5px;
- background: linear-gradient(135deg, #00FF88, #00D1FF, #7000FF);
- -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
-}
-.top-god{
- background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%);
- backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px 26px;
-}
+.stApp{background: #020208; background-image: radial-gradient(at 0% 0%, hsla(212,100%,56%,0.25) 0px, transparent 50%), radial-gradient(at 20% 10%, hsla(273,100%,60%,0.25) 0px, transparent 50%), radial-gradient(at 90% 0%, hsla(158,100%,50%,0.20) 0px, transparent 50%);}
+.header-god{background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 100%); backdrop-filter: blur(40px) saturate(180%); border: 1px solid rgba(255,255,255,0.1); border-radius: 28px; padding: 18px 26px; box-shadow: 0 20px 80px rgba(0,0,0,0.6);}
+.pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border-radius: 24px; padding: 20px 20px 14px 20px; position: relative; box-shadow: 0 12px 40px rgba(0,255,136,0.12), inset 0 1px 0 rgba(255,255,255,0.1);}
+.pick-god::before{content:''; position: absolute; inset: 0; border-radius: 24px; padding: 1.5px; background: linear-gradient(135deg, #00FF88, #00D1FF, #7000FF); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;}
+.top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px 26px;}
 .live-price{font-family: 'Space Grotesk'; font-weight: 700; font-size: 38px; letter-spacing: -1.5px; background: linear-gradient(90deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
 .buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important; box-shadow: 0 0 30px rgba(0,255,136,0.5)!important;}
 .sell-god{background: linear-gradient(135deg, #FF4D6A 0%, #FF8A4D 100%)!important; color: white!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
@@ -41,15 +20,10 @@ st.markdown("""
 .stButton>button{background: linear-gradient(135deg, #00D1FF 0%, #7000FF 50%, #00FF88 100%)!important; border: none!important; border-radius: 18px!important; color: white!important; font-weight: 700!important; height: 64px!important;}
 .score-ring{width: 56px; height: 56px; border-radius: 50%; background: conic-gradient(#00FF88 var(--p), rgba(255,255,255,0.1) 0); display: flex; align-items: center; justify-content: center; position: relative;}
 .score-ring::before{content:''; position: absolute; inset: 4px; background: #0a1220; border-radius: 50%;}
-.target-row{
- display: flex; justify-content: space-between; align-items: center;
- margin-top: 14px; padding: 10px 12px;
- background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.06));
- border: 1px solid rgba(0,255,136,0.25);
- border-left: 3px solid #00FF88;
- border-radius: 12px;
-}
-.ticker-tape{background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); border-radius: 100px; padding: 8px 16px; font-family: JetBrains Mono; font-size: 10px; color: #8892b0;}
+.target-row{display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 10px 12px; background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.06)); border: 1px solid rgba(0,255,136,0.25); border-left: 3px solid #00FF88; border-radius: 12px;}
+.index-chip{display:inline-flex; align-items:center; gap:6px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px; backdrop-filter: blur(10px);}
+.index-up{color:#00FF88; font-weight:800;}
+.index-down{color:#FF4D6A; font-weight:800;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -61,7 +35,74 @@ def get_logo():
         with open("logo.png","rb") as f: return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="58" style="border-radius:16px;">'
     except: return '<div style="font-size:38px;">💎</div>'
 
-st.markdown(f"""<div class="header-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div style="display:flex; align-items:center; gap:18px;"><div>{get_logo()}</div><div><div style="display:flex; align-items:center; gap:10px;"><h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1><span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span><span style="background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:8px; padding:3px 8px; border-radius:100px; font-family:JetBrains Mono; font-weight:800;">LIVE</span></div><div style="display:flex; gap:8px; margin-top:6px;"><span class="ticker-tape">● NIFTY 24,812 ▲ 0.8%</span><span class="ticker-tape">MARKET OPEN • {datetime.now().strftime('%I:%M %p')}</span></div></div></div><div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V42.1 TARGET + PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700; letter-spacing:2px;">GREEN TARGET COLUMN</p></div></div></div>""", unsafe_allow_html=True)
+# LIVE INDICES FETCH
+def get_indices():
+    indices = {
+        "NIFTY50": "^NSEI",
+        "SENSEX": "^BSESN",
+        "BANKNIFTY": "^NSEBANK"
+    }
+    data = {}
+    for name, sym in indices.items():
+        try:
+            tk = yf.Ticker(sym)
+            hist = tk.history(period="2d", interval="1d")
+            if not hist.empty:
+                last = float(hist["Close"].iloc[-1])
+                prev = float(hist["Close"].iloc[-2]) if len(hist)>1 else last
+                chg_pct = ((last-prev)/prev*100) if prev!=0 else 0
+                data[name] = {"price": last, "chg": chg_pct}
+            else:
+                # fallback
+                info = tk.fast_info.last_price
+                data[name] = {"price": float(info) if info else 0, "chg": 0.5}
+        except:
+            data[name] = {"price": 0, "chg": 0}
+    return data
+
+indices_data = get_indices()
+nifty_price = indices_data.get("NIFTY50", {}).get("price", 24812)
+nifty_chg = indices_data.get("NIFTY50", {}).get("chg", 0.8)
+sensex_price = indices_data.get("SENSEX", {}).get("price", 81234)
+sensex_chg = indices_data.get("SENSEX", {}).get("chg", 0.6)
+bank_price = indices_data.get("BANKNIFTY", {}).get("price", 51234)
+bank_chg = indices_data.get("BANKNIFTY", {}).get("chg", 1.1)
+
+def fmt_chip(name, price, chg):
+    arrow = "▲" if chg>=0 else "▼"
+    col = "index-up" if chg>=0 else "index-down"
+    return f'<span class="index-chip">● {name} {int(price):,} <span class="{col}">{arrow} {abs(chg):.2f}%</span></span>'
+
+nifty_chip = fmt_chip("NIFTY50", nifty_price, nifty_chg)
+sensex_chip = fmt_chip("SENSEX", sensex_price, sensex_chg)
+bank_chip = fmt_chip("BANKNIFTY", bank_price, bank_chg)
+
+st.markdown(f"""
+<div class="header-god">
+ <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div style="display:flex; align-items:center; gap:18px;">
+   <div>{get_logo()}</div>
+   <div>
+    <div style="display:flex; align-items:center; gap:10px;">
+     <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
+     <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
+     <span style="background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:8px; padding:3px 8px; border-radius:100px; font-family:JetBrains Mono; font-weight:800;">LIVE</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
+     {nifty_chip}
+     {sensex_chip}
+     {bank_chip}
+     <span class="index-chip" style="color:#8892b0;">MARKET OPEN • {datetime.now().strftime('%I:%M %p')}</span>
+    </div>
+   </div>
+  </div>
+  <div style="text-align:right;">
+   <p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V42.2 INDICES LIVE</p>
+   <p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700; letter-spacing:1px;">NIFTY • SENSEX • BANKNIFTY</p>
+  </div>
+ </div>
+</div>
+""", unsafe_allow_html=True)
 
 SMART_MAP={"CUPID":"CUPID.NS","IOCL":"IOC.NS","IOC":"IOC.NS","GAIL":"GAIL.NS","RELIANCE":"RELIANCE.NS","TCS":"TCS.NS","INFY":"INFY.NS","SBIN":"SBIN.NS","ATGL":"ATGL.NS","ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS","SUZLON":"SUZLON.NS","YESBANK":"YESBANK.NS","RVNL":"RVNL.NS","IRFC":"IRFC.NS","HDFCBANK":"HDFCBANK.NS","ICICIBANK":"ICICIBANK.NS","BHARTIARTL":"BHARTIARTL.NS","ITC":"ITC.NS"}
 WATCHLIST=["CUPID","RELIANCE","INFY","TCS","SBIN","HDFCBANK","ICICIBANK","BHARTIARTL","ITC","IOCL","GAIL","ATGL","ZOMATO","PAYTM","SUZLON","RVNL","IRFC","ADANIPOWER","YESBANK","BAJFINANCE"]
@@ -126,7 +167,6 @@ def get_morning_picks():
         if not df.empty and len(df)>50:
             sc, rsns, rsi = score_stock(df); live=get_live_price(t)
             if live==0: live=float(df["Close"].iloc[-1])
-            # TARGET + PROFIT CALC
             profit_pct = 12 if sc>=100 else 8 if sc>=90 else 6
             target = live * (1 + profit_pct/100)
             sl = live * 0.96
@@ -148,7 +188,7 @@ if morning_picks:
               <div>
                <div style="display:flex; align-items:center; gap:10px;">
                 <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} TOP PICK</span>
-                <span style="color:#00FF88; font-size:10px; font-family:JetBrains Mono;">● AI CONFIDENCE HIGH</span>
+                <span style="color:#00FF88; font-size:10px; font-family:JetBrains Mono;">● AI HIGH</span>
                </div>
                <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick['name']}</h2>
                <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:24px; font-weight:800;">₹{round(pick['live'],2)} <span style="color:#8892b0; font-size:11px;">RSI {pick['rsi']}</span></p>
@@ -161,18 +201,9 @@ if morning_picks:
               </div>
              </div>
              <div class="target-row">
-              <div>
-               <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono; letter-spacing:1px;">TARGET PRICE</p>
-               <p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:16px; font-weight:700;">₹{round(pick['target'],2)}</p>
-              </div>
-              <div style="text-align:center;">
-               <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono; letter-spacing:1px;">PROFIT</p>
-               <p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-size:14px; font-weight:800; background: rgba(0,255,136,0.15); padding:3px 10px; border-radius:100px;">▲ +{pick['profit_pct']}%</p>
-              </div>
-              <div style="text-align:right;">
-               <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono; letter-spacing:1px;">STOP LOSS</p>
-               <p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-size:12px; font-weight:700;">₹{round(pick['sl'],2)}</p>
-              </div>
+              <div><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">TARGET</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:16px; font-weight:700;">₹{round(pick['target'],2)}</p></div>
+              <div style="text-align:center;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-size:14px; font-weight:800; background: rgba(0,255,136,0.15); padding:3px 10px; border-radius:100px;">▲ +{pick['profit_pct']}%</p></div>
+              <div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">STOP LOSS</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-size:12px; font-weight:700;">₹{round(pick['sl'],2)}</p></div>
              </div>
             </div>
             """, unsafe_allow_html=True)
@@ -240,16 +271,3 @@ with tab_chart:
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     clean_sym = raw.replace(".NS","").replace(".BO","").strip()
     st.components.v1.iframe(f"https://s.tradingview.com/widgetembed/?symbol=NSE:{clean_sym}&interval=D&theme=dark&style=1&timezone=Asia%2FKolkata", height=520)
-
-with tab_screen:
-    if st.button("🚀 GOD SCAN ALL", use_container_width=True):
-        results=[]
-        for name in WATCHLIST:
-            t=resolve_ticker(name); d=load_data(t)
-            if not d.empty:
-                sc,_,_=score_stock(d); live_p=get_live_price(t)
-                if live_p==0: live_p=float(d["Close"].iloc[-1])
-                results.append({"name":name,"score":sc,"live":live_p})
-        results=sorted(results, key=lambda x: x["score"], reverse=True)
-        for r in results[:12]:
-            st.markdown(f"<div class='pick-god' style='margin-bottom:10px;'><b style='color:white;'>{r['name']}</b> <span style='float:right; color:#00FF88;'>₹{round(r['live'],2)} • {r['score']}</span></div>", unsafe_allow_html=True)
