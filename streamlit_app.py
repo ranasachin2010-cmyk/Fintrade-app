@@ -14,16 +14,15 @@ st.markdown("""
 .pick-god::before{content:''; position: absolute; inset: 0; border-radius: 24px; padding: 1.5px; background: linear-gradient(135deg, #00FF88, #00D1FF, #7000FF); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;}
 .top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px 26px;}
 .live-price{font-family: 'Space Grotesk'; font-weight: 700; font-size: 38px; letter-spacing: -1.5px; background: linear-gradient(90deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-.buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important; box-shadow: 0 0 30px rgba(0,255,136,0.5)!important;}
+.buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
 .sell-god{background: linear-gradient(135deg, #FF4D6A 0%, #FF8A4D 100%)!important; color: white!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
 .stTextInput>div>div>input{background: rgba(255,255,255,0.06)!important; border: 1.5px solid rgba(255,255,255,0.12)!important; border-radius: 20px!important; color: white!important; font-family: JetBrains Mono!important; font-weight: 800!important; font-size: 18px!important; height: 64px!important;}
 .stButton>button{background: linear-gradient(135deg, #00D1FF 0%, #7000FF 50%, #00FF88 100%)!important; border: none!important; border-radius: 18px!important; color: white!important; font-weight: 700!important; height: 64px!important;}
 .score-ring{width: 56px; height: 56px; border-radius: 50%; background: conic-gradient(#00FF88 var(--p), rgba(255,255,255,0.1) 0); display: flex; align-items: center; justify-content: center; position: relative;}
 .score-ring::before{content:''; position: absolute; inset: 4px; background: #0a1220; border-radius: 50%;}
 .target-row{display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 10px 12px; background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.06)); border: 1px solid rgba(0,255,136,0.25); border-left: 3px solid #00FF88; border-radius: 12px;}
-.index-chip{display:inline-flex; align-items:center; gap:6px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px; backdrop-filter: blur(10px);}
-.index-up{color:#00FF88; font-weight:800;}
-.index-down{color:#FF4D6A; font-weight:800;}
+.index-chip{display:inline-flex; align-items:center; gap:6px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px;}
+.index-up{color:#00FF88; font-weight:800;}.index-down{color:#FF4D6A; font-weight:800;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -35,48 +34,32 @@ def get_logo():
         with open("logo.png","rb") as f: return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="58" style="border-radius:16px;">'
     except: return '<div style="font-size:38px;">💎</div>'
 
-# LIVE INDICES FETCH
 def get_indices():
-    indices = {
-        "NIFTY50": "^NSEI",
-        "SENSEX": "^BSESN",
-        "BANKNIFTY": "^NSEBANK"
-    }
+    indices = {"NIFTY50": "^NSEI", "SENSEX": "^BSESN", "BANKNIFTY": "^NSEBANK"}
     data = {}
     for name, sym in indices.items():
         try:
             tk = yf.Ticker(sym)
             hist = tk.history(period="2d", interval="1d")
             if not hist.empty:
-                last = float(hist["Close"].iloc[-1])
-                prev = float(hist["Close"].iloc[-2]) if len(hist)>1 else last
+                last = float(hist["Close"].iloc[-1]); prev = float(hist["Close"].iloc[-2]) if len(hist)>1 else last
                 chg_pct = ((last-prev)/prev*100) if prev!=0 else 0
                 data[name] = {"price": last, "chg": chg_pct}
             else:
-                # fallback
-                info = tk.fast_info.last_price
-                data[name] = {"price": float(info) if info else 0, "chg": 0.5}
-        except:
-            data[name] = {"price": 0, "chg": 0}
+                data[name] = {"price": 0, "chg": 0}
+        except: data[name] = {"price": 0, "chg": 0}
     return data
 
 indices_data = get_indices()
-nifty_price = indices_data.get("NIFTY50", {}).get("price", 24812)
-nifty_chg = indices_data.get("NIFTY50", {}).get("chg", 0.8)
-sensex_price = indices_data.get("SENSEX", {}).get("price", 81234)
-sensex_chg = indices_data.get("SENSEX", {}).get("chg", 0.6)
-bank_price = indices_data.get("BANKNIFTY", {}).get("price", 51234)
-bank_chg = indices_data.get("BANKNIFTY", {}).get("chg", 1.1)
-
 def fmt_chip(name, price, chg):
-    arrow = "▲" if chg>=0 else "▼"
-    col = "index-up" if chg>=0 else "index-down"
+    arrow = "▲" if chg>=0 else "▼"; col = "index-up" if chg>=0 else "index-down"
     return f'<span class="index-chip">● {name} {int(price):,} <span class="{col}">{arrow} {abs(chg):.2f}%</span></span>'
 
-nifty_chip = fmt_chip("NIFTY50", nifty_price, nifty_chg)
-sensex_chip = fmt_chip("SENSEX", sensex_price, sensex_chg)
-bank_chip = fmt_chip("BANKNIFTY", bank_price, bank_chg)
+nifty_chip = fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))
+sensex_chip = fmt_chip("SENSEX", indices_data.get("SENSEX", {}).get("price", 0), indices_data.get("SENSEX", {}).get("chg", 0))
+bank_chip = fmt_chip("BANKNIFTY", indices_data.get("BANKNIFTY", {}).get("price", 0), indices_data.get("BANKNIFTY", {}).get("chg", 0))
 
+# HEADER - MARKET OPEN REMOVED
 st.markdown(f"""
 <div class="header-god">
  <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -92,13 +75,12 @@ st.markdown(f"""
      {nifty_chip}
      {sensex_chip}
      {bank_chip}
-     <span class="index-chip" style="color:#8892b0;">MARKET OPEN • {datetime.now().strftime('%I:%M %p')}</span>
     </div>
    </div>
   </div>
   <div style="text-align:right;">
-   <p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V42.2 INDICES LIVE</p>
-   <p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700; letter-spacing:1px;">NIFTY • SENSEX • BANKNIFTY</p>
+   <p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V42.3 CLEAN INDICES</p>
+   <p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">NIFTY • SENSEX • BANKNIFTY</p>
   </div>
  </div>
 </div>
@@ -186,17 +168,13 @@ if morning_picks:
             <div class="pick-god">
              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
               <div>
-               <div style="display:flex; align-items:center; gap:10px;">
-                <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} TOP PICK</span>
-                <span style="color:#00FF88; font-size:10px; font-family:JetBrains Mono;">● AI HIGH</span>
-               </div>
+               <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} TOP PICK</span>
                <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick['name']}</h2>
                <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:24px; font-weight:800;">₹{round(pick['live'],2)} <span style="color:#8892b0; font-size:11px;">RSI {pick['rsi']}</span></p>
                <p style="margin:10px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{' • '.join(pick['reasons'][:3])}</p>
               </div>
               <div style="text-align:center;">
                <div class="score-ring" style="--p:{pct}%;"><span style="position:relative; z-index:2; color:white; font-family:Space Grotesk; font-weight:700; font-size:14px;">{pick['score']}</span></div>
-               <p style="margin:8px 0 0 0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SCORE</p>
                <div style="margin-top:10px; background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:9px; padding:5px 12px; border-radius:100px; font-weight:700;">BUY</div>
               </div>
              </div>
@@ -207,7 +185,6 @@ if morning_picks:
              </div>
             </div>
             """, unsafe_allow_html=True)
-    st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
     if st.button("↻ Refresh God Picks", use_container_width=True):
         st.session_state.pick_date=""; st.rerun()
 
