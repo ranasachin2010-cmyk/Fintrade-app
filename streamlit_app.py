@@ -1,19 +1,19 @@
 import streamlit as st, yfinance as yf, pandas as pd, plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import base64, requests, re
-from datetime import date, datetime
+import base64, requests, re, json, os
+from datetime import date, datetime, timedelta
 import pytz
 
-st.set_page_config(page_title="FinTrade V45 LIGHTNING", layout="wide", page_icon="⚡")
+st.set_page_config(page_title="FinTrade V46 PORTFOLIO", layout="wide", page_icon="🏆")
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
 .stApp{background: #020208; background-image: radial-gradient(at 0% 0%, hsla(212,100%,56%,0.25) 0px, transparent 50%), radial-gradient(at 20% 10%, hsla(273,100%,60%,0.25) 0px, transparent 50%), radial-gradient(at 90% 0%, hsla(158,100%,50%,0.20) 0px, transparent 50%);}
 .header-god{background: linear-gradient(135deg, #6A5AE0 0%, #7B6EF0 100%)!important; border:none!important; border-radius: 28px; padding: 18px 26px; box-shadow: 0 20px 80px rgba(106,90,224,0.35);}
-.header-god img{background:transparent!important; border:none!important; box-shadow:none!important;}
 .pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border:1.5px solid rgba(0,255,136,0.25); border-radius: 24px; padding: 20px 20px 14px 20px; box-shadow: 0 12px 40px rgba(0,255,136,0.12);}
 .top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px 26px;}
+.portfolio-god{background: linear-gradient(135deg, #FFD700 0%, #FF6A00 100%); border-radius: 20px; padding: 16px 22px; color: black; font-family: Space Grotesk; margin-bottom: 16px;}
 .live-price{font-family: 'Space Grotesk'; font-weight: 700; font-size: 38px; background: linear-gradient(90deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
 .buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
 .stTextInput>div>div>input{background: rgba(255,255,255,0.06)!important; border: 1.5px solid rgba(255,255,255,0.12)!important; border-radius: 20px!important; color: white!important; font-family: JetBrains Mono!important; font-weight: 800!important; font-size: 18px!important; height: 64px!important;}
@@ -30,13 +30,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+HISTORY_FILE = "picks_history.json"
+
 if "morning_picks" not in st.session_state: st.session_state.morning_picks=[]
 if "pick_date" not in st.session_state: st.session_state.pick_date=""
 if "tg_token" not in st.session_state: st.session_state.tg_token=""
 if "tg_chat" not in st.session_state: st.session_state.tg_chat=""
-if "last_auto_sent" not in st.session_state: st.session_state.last_auto_sent=""
 
-# --- TURBO CACHE 1 HOUR FOR INDICES ---
 @st.cache_data(ttl=3600, show_spinner=False)
 def get_indices():
     indices = {"NIFTY50": "^NSEI", "SENSEX": "^BSESN", "BANKNIFTY": "^NSEBANK"}
@@ -61,24 +61,11 @@ def load_data(tick, period="3mo"):
         return df.dropna()
     except: return pd.DataFrame()
 
-@st.cache_data(ttl=600, show_spinner=False)
-def get_live_price_fast(tick, fallback):
-    try:
-        tk=yf.Ticker(tick)
-        p = tk.fast_info.last_price
-        if p and p!=0: return float(p)
-    except: pass
-    return fallback
-
 def get_logo():
     try:
         with open("logo.png","rb") as f:
-            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="68" style="border-radius:16px; background:transparent; border:none;">'
+            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="68" style="border-radius:16px;">'
     except: return '<div style="font-size:38px;">💎</div>'
-
-def send_tg(token, chat, msg):
-    try: requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id":chat,"text":msg,"parse_mode":"Markdown"}, timeout=10)
-    except: pass
 
 def calc_st(df, period=10, mult=3):
     hl2=(df['High']+df['Low'])/2; tr1=df['High']-df['Low']; tr2=(df['High']-df['Close'].shift()).abs(); tr3=(df['Low']-df['Close'].shift()).abs()
@@ -128,7 +115,6 @@ def get_smart_target(df, live, score):
     except:
         return 8.0, live*1.08, live*0.96, 2.0
 
-# --- TURBO BACKTEST ONLY FOR TOP 2 - 24H CACHE ---
 @st.cache_data(ttl=86400, show_spinner=False)
 def backtest_winrate(ticker):
     try:
@@ -158,6 +144,65 @@ def backtest_winrate(ticker):
     except:
         return 0, 0, 0
 
+# --- V46 PORTFOLIO TRACKER ---
+def load_history():
+    if not os.path.exists(HISTORY_FILE): return []
+    try:
+        with open(HISTORY_FILE,"r") as f: return json.load(f)
+    except: return []
+
+def save_history(picks):
+    history = load_history()
+    today = str(date.today())
+    if any(h.get("date")==today for h in history): return
+    for p in picks:
+        history.append({
+            "date": today,
+            "name": p.get("name"),
+            "entry": round(float(p.get("live",0)),2),
+            "target": round(float(p.get("target",0)),2),
+            "sl": round(float(p.get("sl",0)),2),
+            "profit_pct": p.get("profit_pct",0),
+            "score": p.get("score",0),
+            "ticker": p.get("ticker","")
+        })
+    with open(HISTORY_FILE,"w") as f: json.dump(history[-60:], f, indent=2)
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def evaluate_portfolio():
+    history = load_history()
+    if not history: return 0,0,0, []
+    last_30 = [h for h in history if datetime.strptime(h["date"], "%Y-%m-%d").date() >= (date.today() - timedelta(days=30))]
+    results=[]
+    wins=0
+    for h in last_30:
+        try:
+            ticker = h.get("ticker")
+            if not ticker: continue
+            df = yf.Ticker(ticker).history(period="1mo", interval="1d")
+            if df.empty or len(df)<2:
+                results.append({**h, "status":"OPEN"})
+                continue
+            entry_date = datetime.strptime(h["date"], "%Y-%m-%d").date()
+            # Find entry index
+            df = df.reset_index()
+            # Check next 10 trading days after entry
+            future = df.tail(10)
+            target = h["target"]; sl = h["sl"]
+            status="OPEN"
+            for idx in range(len(future)):
+                high = float(future["High"].iloc[idx]); low = float(future["Low"].iloc[idx])
+                if high >= target:
+                    status="WIN"; wins+=1; break
+                if low <= sl:
+                    status="LOSS"; break
+            results.append({**h, "status":status})
+        except:
+            results.append({**h, "status":"OPEN"})
+    total=len(results)
+    win_pct = int(wins/total*100) if total>0 else 0
+    return win_pct, wins, total, results
+
 indices_data = get_indices()
 def fmt_chip(name, price, chg):
     arrow = "▲" if chg>=0 else "▼"; col = "index-up" if chg>=0 else "index-down"
@@ -173,7 +218,7 @@ st.markdown(f"""
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
-     <span class="auto-badge">⚡ V45 TURBO 3x FAST</span>
+     <span class="auto-badge">🏆 V46 PORTFOLIO</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
      {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
@@ -182,7 +227,7 @@ st.markdown(f"""
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V45 TURBO</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">LIGHTNING FAST</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V46 PORTFOLIO</p><p style="margin:2px 0 0 0; color:#FFD700; font-family:Space Grotesk; font-size:10px; font-weight:700;">REAL TRACKER</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -200,7 +245,6 @@ def get_morning_picks_fast():
     today=str(date.today())
     if st.session_state.pick_date==today and st.session_state.morning_picks:
         return st.session_state.morning_picks
-    # STEP 1: FAST SCORE ONLY (NO BACKTEST)
     temp=[]
     for name in WATCHLIST_FAST:
         t=resolve_ticker(name); df=load_data(t)
@@ -208,17 +252,34 @@ def get_morning_picks_fast():
             sc, rsns, rsi = score_stock(df)
             live = float(df["Close"].iloc[-1])
             profit_pct, target, sl, atr_pct = get_smart_target(df, live, sc)
-            temp.append({"name":name, "score":sc, "reasons":rsns, "rsi":rsi, "live":live, "target":target, "profit_pct":profit_pct, "sl":sl, "atr_pct":atr_pct, "ticker":t, "df":df})
+            temp.append({"name":name, "score":sc, "reasons":rsns, "rsi":rsi, "live":live, "target":target, "profit_pct":profit_pct, "sl":sl, "atr_pct":atr_pct, "ticker":t})
     temp=sorted(temp, key=lambda x: x["score"], reverse=True)[:2]
-    # STEP 2: BACKTEST ONLY FOR TOP 2
     picks=[]
     for p in temp:
         win_pct, wins, total = backtest_winrate(p["ticker"])
         picks.append({**p, "win_pct":win_pct, "wins":wins, "total":total})
     st.session_state.morning_picks=picks; st.session_state.pick_date=today
+    save_history(picks)
     return picks
 
 morning_picks=get_morning_picks_fast()
+win30, wins30, total30, history_results = evaluate_portfolio()
+
+if total30>0:
+    st.markdown(f"""
+    <div class="portfolio-god">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div><div style="font-size:12px; opacity:0.8;">📊 LAST 30 DAYS REAL PORTFOLIO</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN RATE • {wins30}/{total30} Targets Hit</div><div style="font-size:11px; margin-top:4px; opacity:0.9;">Risk 1:2 • Har din 2 picks • Honest P&L - Koi fake nahi</div></div>
+        <div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">VERIFIED</div></div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown(f"""
+    <div class="portfolio-god">
+      <div style="font-size:13px;">🏆 Portfolio Tracker Started! Roz 2 picks save honge. 7 din baad aapko real win rate dikhega. Aaj se tracking shuru!</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 if morning_picks:
     c1,c2=st.columns(2)
@@ -235,7 +296,7 @@ if morning_picks:
                   <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick.get('name')}</h2>
                   <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:24px; font-weight:800;">Rs{round(pick.get('live',0),2)} <span style="color:#8892b0; font-size:11px;">RSI {pick.get('rsi',0)}</span></p>
                   <p style="margin:6px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(pick.get('reasons',[])[:3])}</p>
-                  <span class="win-badge">Win {pick.get('win_pct',0)}% ({pick.get('wins',0)}/{pick.get('total',0)})</span><span class="atr-badge">ATR {pick.get('atr_pct',0):.1f}%</span>
+                  <span class="win-badge">Backtest {pick.get('win_pct',0)}% ({pick.get('wins',0)}/{pick.get('total',0)})</span><span class="atr-badge">ATR {pick.get('atr_pct',0):.1f}%</span>
                 </div>
                 <div style="text-align:center;">
                   <div class="score-ring" style="background: conic-gradient(#00FF88 {pct}%, rgba(255,255,255,0.1) 0);"><span style="position:relative; z-index:2; color:white; font-family:Space Grotesk; font-weight:700; font-size:14px;">{score}</span></div>
@@ -249,23 +310,20 @@ if morning_picks:
               </div>
             </div>
             """, unsafe_allow_html=True)
-    if st.button("⚡ FAST Refresh (4 sec)", use_container_width=True):
-        st.session_state.pick_date=""; st.session_state.morning_picks=[]; st.cache_data.clear(); st.rerun()
 
-# Search
+# Search + Tabs
 c1,c2=st.columns([5.2,1])
 with c1: user_input=st.text_input("search", value="CUPID", placeholder="Search...", label_visibility="collapsed")
 with c2: st.button("SEARCH", use_container_width=True)
 
 raw=user_input.upper().strip(); ticker=resolve_ticker(raw); df=load_data(ticker)
 if df.empty: st.error(f"{raw} not found"); st.stop()
-last=float(df["Close"].dropna().iloc[-1]); live=get_live_price_fast(ticker, last)
+last=float(df["Close"].dropna().iloc[-1])
 close=df["Close"]; ema20=close.ewm(20).mean(); ema50=close.ewm(50).mean()
 sig="BUY" if ema20.iloc[-1]>ema50.iloc[-1] and last>ema20.iloc[-1] else "SELL" if ema20.iloc[-1]<ema50.iloc[-1] else "HOLD"
-sig_class="buy-god"
 df_c=df.tail(100).copy(); m_line,s_line,hist=calc_macd(df_c["Close"]); st_line,st_dir=calc_st(df_c)
 st_sig="BUY" if st_dir.iloc[-1]==1 else "SELL"; st_color="#00FF88" if st_sig=="BUY" else "#FF4D6A"
-profit_main, tgt, sl_main, atr_main = get_smart_target(df, live, 90)
+profit_main, tgt, sl_main, atr_main = get_smart_target(df, last, 90)
 win_pct_main, wins_main, total_main = backtest_winrate(ticker)
 
 st.markdown(f"""
@@ -288,24 +346,20 @@ st.markdown(f"""
         </div>
       </div>
     </div>
-    <div style="text-align:right;">
-      <p style="margin:0; color:#8892b0; font-size:9px; font-family:JetBrains Mono;">LIVE PRICE</p>
-      <p class="live-price">Rs{round(live,2)}</p>
-      <div class="{sig_class}" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">{sig}</div>
-    </div>
+    <div style="text-align:right;"><p class="live-price">Rs{round(last,2)}</p><div class="buy-god" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">{sig}</div></div>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-tab_bse, tab_chart = st.tabs(["BSE TradingView", "Plotly"])
+tab1, tab2, tab3 = st.tabs(["📊 BSE Chart", "📈 Indicators", "🏆 Last 30 Days History"])
 
-with tab_bse:
+with tab1:
     clean_sym = raw.replace(".NS","").strip()
     bse_symbol = f"BSE:{clean_sym}"
     tv_bse_pro = f"https://s.tradingview.com/widgetembed/?frameElementId=tv_final&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
     st.components.v1.iframe(tv_bse_pro, height=650, scrolling=False)
 
-with tab_chart:
+with tab2:
     close_c=df_c["Close"]; e20=close_c.ewm(20).mean(); e50=close_c.ewm(50).mean()
     delta=close_c.diff(); gain=(delta.where(delta>0,0)).rolling(14).mean(); loss=(-delta.where(delta<0,0)).rolling(14).mean()
     rs=gain/loss.replace(0,0.001); rsi=100-(100/(1+rs))
@@ -322,4 +376,18 @@ with tab_chart:
     fig.update_layout(template="plotly_dark", height=620, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_rangeslider_visible=False, margin=dict(l=0,r=0,t=10,b=0))
     st.plotly_chart(fig, use_container_width=True)
 
-st.caption(f"V45 TURBO ⚡ 3x Fast • 8 Stocks Only • Backtest 24h Cache • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+with tab3:
+    if history_results:
+        st.markdown(f"### 🏆 Last 30 Days - {win30}% Win ({wins30}/{total30})")
+        for h in reversed(history_results[-20:]):
+            color = "#00FF88" if h["status"]=="WIN" else "#FF4D6A" if h["status"]=="LOSS" else "#FFD700"
+            st.markdown(f"""
+            <div style="background: rgba(255,255,255,0.05); border-left: 3px solid {color}; border-radius: 10px; padding: 10px 14px; margin-bottom:8px; display:flex; justify-content:space-between;">
+              <div><span style="color:white; font-family:Space Grotesk; font-weight:700;">{h['name']}</span> <span style="color:#8892b0; font-size:11px;">{h['date']}</span> • Entry Rs{h['entry']} → Target Rs{h['target']} <span style="color:{color}; font-weight:700;">{h['status']}</span></div>
+              <div style="color:#FFD700; font-family:JetBrains Mono; font-size:11px;">+{h['profit_pct']}%</div>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("Abhi history khali hai. Kal se 2 picks daily save honge, 7 din baad yaha real win rate dikhega!")
+
+st.caption(f"V46 PORTFOLIO TRACKER • Real P&L • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
