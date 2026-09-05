@@ -66,7 +66,7 @@ def load_data(tick, period="3mo"):
 def get_logo():
     try:
         with open("logo.png","rb") as f:
-            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="68" style="border-radius:16px;">'
+            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="130" style="border-radius:22px;">'
     except: return '<div style="font-size:38px;">🤖</div>'
 
 def calc_st(df, period=10, mult=3):
