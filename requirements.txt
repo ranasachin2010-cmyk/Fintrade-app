@@ -1,9 +1,10 @@
-streamlit
-yfinance
+streamlit==1.39.0
+yfinance==0.2.43
 plotly
-pandas
+pandas==2.2.3
 fpdf2
-scikit-learn
-numpy
+scikit-learn==1.5.2
+numpy==1.26.4
 pytz
 ta
+pillow==10.4.0
