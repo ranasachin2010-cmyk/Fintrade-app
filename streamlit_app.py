@@ -40,7 +40,7 @@ if "last_auto_sent" not in st.session_state: st.session_state.last_auto_sent=""
 
 def get_logo():
     try:
-        with open("logo.png","rb") as f: return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="130" style="border-radius:180px;">'
+        with open("logo.png","rb") as f: return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="130" style="border-radius:22px;">'
     except: return '<div style="font-size:38px;">💎</div>'
 
 def send_tg(token, chat, msg):
