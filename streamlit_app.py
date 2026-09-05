@@ -1,21 +1,24 @@
 import streamlit as st, yfinance as yf, pandas as pd, plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import base64, requests, re
-from datetime import date, datetime, time
+from datetime import date, datetime
 import pytz
 
-st.set_page_config(page_title="FinTrade God V43", layout="wide", page_icon="💎")
+st.set_page_config(page_title="FinTrade God V43.2 CLEAN", layout="wide", page_icon="💎")
 
-# AUTO REFRESH EVERY 5 MIN - 300 seconds
-st.markdown('<meta http-equiv="refresh" content="300">', unsafe_allow_html=True)
+# --- FIX 1: META REFRESH HATAYA - AUTO REFRESH VIA CACHE ---
+# st.markdown('<meta http-equiv="refresh" content="300">', unsafe_allow_html=True) -> HATAYA
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
 .stApp{background: #020208; background-image: radial-gradient(at 0% 0%, hsla(212,100%,56%,0.25) 0px, transparent 50%), radial-gradient(at 20% 10%, hsla(273,100%,60%,0.25) 0px, transparent 50%), radial-gradient(at 90% 0%, hsla(158,100%,50%,0.20) 0px, transparent 50%);}
-.header-god{background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 100%); backdrop-filter: blur(40px) saturate(180%); border: 1px solid rgba(255,255,255,0.1); border-radius: 28px; padding: 18px 26px; box-shadow: 0 20px 80px rgba(0,0,0,0.6);}
-.pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border-radius: 24px; padding: 20px 20px 14px 20px; position: relative; box-shadow: 0 12px 40px rgba(0,255,136,0.12), inset 0 1px 0 rgba(255,255,255,0.1);}
-.pick-god::before{content:''; position: absolute; inset: 0; border-radius: 24px; padding: 1.5px; background: linear-gradient(135deg, #00FF88, #00D1FF, #7000FF); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;}
+.header-god{background: linear-gradient(135deg, #6A5AE0 0%, #7B6EF0 100%)!important; border:none!important; border-radius: 28px; padding: 18px 26px; box-shadow: 0 20px 80px rgba(106,90,224,0.35);}
+.header-god img{background:transparent!important; border:none!important; box-shadow:none!important;}
+
+/* FIX 2: PURPLE DOTS BUG FIX - ::before HATAYA */
+.pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border:1.5px solid rgba(0,255,136,0.25); border-radius: 24px; padding: 20px 20px 14px 20px; position: relative; box-shadow: 0 12px 40px rgba(0,255,136,0.12);}
+
 .top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px 26px;}
 .live-price{font-family: 'Space Grotesk'; font-weight: 700; font-size: 38px; background: linear-gradient(90deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
 .buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
@@ -27,8 +30,7 @@ st.markdown("""
 .index-chip{display:inline-flex; align-items:center; gap:6px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px;}
 .index-up{color:#00FF88; font-weight:800;}.index-down{color:#FF4D6A; font-weight:800;}
 .bse-badge{background: linear-gradient(135deg, #FF6A00, #FFD700); color:black; font-family:Space Grotesk; font-weight:700; font-size:10px; padding:4px 10px; border-radius:100px;}
-.auto-badge{background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:8px; padding:3px 8px; border-radius:100px; font-family:JetBrains Mono; animation: blink 2s infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
+.auto-badge{background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:8px; padding:3px 8px; border-radius:100px; font-family:JetBrains Mono;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -38,15 +40,7 @@ if "tg_token" not in st.session_state: st.session_state.tg_token=""
 if "tg_chat" not in st.session_state: st.session_state.tg_chat=""
 if "last_auto_sent" not in st.session_state: st.session_state.last_auto_sent=""
 
-def get_logo():
-    try:
-        with open("logo.png","rb") as f: return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="58" style="border-radius:16px;">'
-    except: return '<div style="font-size:38px;">💎</div>'
-
-def send_tg(token, chat, msg):
-    try: requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id":chat,"text":msg,"parse_mode":"Markdown"}, timeout=10)
-    except: pass
-
+@st.cache_data(ttl=300, show_spinner=False)
 def get_indices():
     indices = {"NIFTY50": "^NSEI", "SENSEX": "^BSESN", "BANKNIFTY": "^NSEBANK"}
     data = {}
@@ -60,6 +54,16 @@ def get_indices():
             else: data[name] = {"price": 0, "chg": 0}
         except: data[name] = {"price": 0, "chg": 0}
     return data
+
+def get_logo():
+    try:
+        with open("logo.png","rb") as f:
+            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="68" style="border-radius:16px; background:transparent; border:none;">'
+    except: return '<div style="font-size:38px;">💎</div>'
+
+def send_tg(token, chat, msg):
+    try: requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id":chat,"text":msg,"parse_mode":"Markdown"}, timeout=10)
+    except: pass
 
 indices_data = get_indices()
 def fmt_chip(name, price, chg):
@@ -76,7 +80,7 @@ st.markdown(f"""
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
-     <span class="auto-badge">● AUTO 5M REFRESH</span>
+     <span class="auto-badge">● AUTO 5M • NO PORTFOLIO</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
      {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
@@ -85,7 +89,7 @@ st.markdown(f"""
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V43 ULTIMATE</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">AUTO + TG 9:15 + BSE INDICATORS</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V43.2 CLEAN</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">NO PORTFOLIO • FULL WIDTH</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -98,6 +102,8 @@ def resolve_ticker(t):
     if r in SMART_MAP: return SMART_MAP[r]
     if ns in SMART_MAP: return SMART_MAP[ns]
     return ns+".NS" if len(ns)>1 else r+".NS"
+
+@st.cache_data(ttl=300, show_spinner=False)
 def load_data(tick):
     try:
         tk=yf.Ticker(tick); df=tk.history(period="3mo",interval="1d",auto_adjust=False)
@@ -105,6 +111,7 @@ def load_data(tick):
         if isinstance(df.columns,pd.MultiIndex): df.columns=df.columns.get_level_values(0)
         return df.dropna()
     except: return pd.DataFrame()
+
 def get_live_price(tick):
     try:
         tk=yf.Ticker(tick); p=tk.fast_info.last_price
@@ -112,6 +119,7 @@ def get_live_price(tick):
             d=tk.history(period="1d",interval="1m"); p=float(d["Close"].dropna().iloc[-1]) if not d.empty else 0
         return float(p)
     except: return 0
+
 def calc_st(df, period=10, mult=3):
     hl2=(df['High']+df['Low'])/2; tr1=df['High']-df['Low']; tr2=(df['High']-df['Close'].shift()).abs(); tr3=(df['Low']-df['Close'].shift()).abs()
     tr=pd.concat([tr1,tr2,tr3],axis=1).max(axis=1); atr=tr.rolling(period).mean(); upper=hl2+mult*atr; lower=hl2-mult*atr
@@ -122,8 +130,10 @@ def calc_st(df, period=10, mult=3):
         else: direction[i]=direction[i-1]
         st_line[i]=lower.iloc[i] if direction[i]==1 else upper.iloc[i]
     return pd.Series(st_line,index=df.index), pd.Series(direction,index=df.index)
+
 def calc_macd(c, fast=12, slow=26, sig=9):
     ef=c.ewm(span=fast).mean(); es=c.ewm(span=slow).mean(); m=ef-es; s=m.ewm(span=sig).mean(); h=m-s; return m,s,h
+
 def score_stock(df):
     try:
         c=df["Close"]; e20=c.ewm(20).mean(); e50=c.ewm(50).mean(); e200=c.ewm(200).mean()
@@ -162,7 +172,6 @@ def get_morning_picks():
 
 morning_picks=get_morning_picks()
 
-# TELEGRAM AUTO 9:15 AM IST
 ist = pytz.timezone('Asia/Kolkata')
 now_ist = datetime.now(ist)
 today_str = str(date.today())
@@ -210,12 +219,11 @@ with tab_bse:
     clean_sym = raw.replace(".NS","").replace(".BO","").strip()
     bse_symbol = f"BSE:{clean_sym}"
     st.markdown(f"""<div style="background: linear-gradient(90deg, #FF6A00, #FFD700); padding: 12px 16px; border-radius: 14px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><div style="display:flex; align-items:center; gap:10px;"><span style="font-family:Space Grotesk; font-weight:700; color:black; font-size:16px;">{bse_symbol} • PRO + Supertrend + MACD + RSI</span><span style="background:black; color:#00FF88; font-size:9px; padding:4px 8px; border-radius:100px; font-family:JetBrains Mono;">BUY/SELL INDICATORS ON</span></div></div>""", unsafe_allow_html=True)
-    # BSE TradingView with Studies: Supertrend, MACD, RSI
-    tv_bse_pro = f"https://s.tradingview.com/widgetembed/?frameElementId=tradingview_bse_pro&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1&studies_overrides=%7B%7D"
+    tv_bse_pro = f"https://s.tradingview.com/widgetembed/?frameElementId=tradingview_bse_pro&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
     st.components.v1.iframe(tv_bse_pro, height=700, scrolling=False)
     c1,c2=st.columns(2)
     with c1: st.link_button(f"📥 Open {bse_symbol} TradingView", f"https://www.tradingview.com/chart/?symbol={bse_symbol}", use_container_width=True)
-    with c2: st.link_button(f"📷 Download Chart (Camera Icon on Chart)", f"https://www.tradingview.com/chart/?symbol={bse_symbol}", use_container_width=True)
+    with c2: st.link_button(f"📷 Download Chart", f"https://www.tradingview.com/chart/?symbol={bse_symbol}", use_container_width=True)
 
 with tab_chart:
     close_c=df_c["Close"]; e20=close_c.ewm(20).mean(); e50=close_c.ewm(50).mean()
@@ -232,7 +240,7 @@ with tab_chart:
     fig.add_trace(go.Bar(x=df_c.index, y=hist, marker_color=colors), row=2, col=1)
     fig.add_trace(go.Scatter(x=df_c.index, y=rsi, line=dict(color="#C084FC",width=2), name="RSI"), row=3, col=1)
     fig.update_layout(template="plotly_dark", height=620, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_rangeslider_visible=False, margin=dict(l=0,r=0,t=10,b=0))
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True})
+    st.plotly_chart(fig, use_container_width=True)
 
 with tab_tg:
     st.markdown("### 📲 Telegram Auto Setup - 9:15 AM")
@@ -247,6 +255,4 @@ with tab_tg:
             send_tg(tok, chat, msg)
             st.success("✅ Test message sent! 9:15 AM ko auto ayega!")
         else: st.warning("Picks not ready")
-    st.info("🔔 App ko 9:15 AM IST pe khula rakho ya server pe deploy karo - Telegram auto chala jayega! Auto refresh har 5 min pe prices update karega!")
-    if st.session_state.last_auto_sent:
-        st.success(f"Last auto sent: {st.session_state.last_auto_sent}")
+    st.info("🔔 Auto 5M cache se update • No crash • Logo fixed • Portfolio removed • Clean UI")
