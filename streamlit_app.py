@@ -11,7 +11,6 @@ st.markdown("""
 .stApp{background: radial-gradient(1200px 600px at 0% 0%, #1a1f6c 0%, #0a0a1a 40%), radial-gradient(1000px 500px at 100% 0%, #6c1a6c 0%, #0a0a1a 50%), #050510;}
 .header-glass{background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.12); border-radius: 24px; padding: 20px 24px;}
 .top-premium{background: linear-gradient(135deg, rgba(0,209,255,0.15), rgba(112,0,255,0.15), rgba(0,255,136,0.08)); backdrop-filter: blur(20px); border: 1.5px solid rgba(0,209,255,0.25); border-radius: 24px; padding: 18px 22px;}
-.morning-box{background: linear-gradient(135deg, #FFD70022, #FF8A0022, #00FF8822); border: 2px solid #FFD700; border-radius: 20px; padding: 20px; box-shadow: 0 0 40px #FFD70033;}
 .buy-neon{background: linear-gradient(135deg, #00FF88, #00D1FF)!important; color: black!important; font-weight: 900!important; font-size: 26px!important; padding: 14px 32px!important; border-radius: 16px!important; box-shadow: 0 0 30px #00FF8855!important; border: 2px solid #00FF88!important; animation: pulse 2s infinite;}
 .sell-neon{background: linear-gradient(135deg, #FF4D6A, #FF8A4D)!important; color: white!important; font-weight: 900!important; font-size: 26px!important; padding: 14px 32px!important; border-radius: 16px!important; box-shadow: 0 0 30px #FF4D6A66!important; border: 2px solid #FF4D6A!important; animation: pulse 2s infinite;}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
@@ -21,8 +20,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-if "last_st" not in st.session_state: st.session_state.last_st=""
-if "boom" not in st.session_state: st.session_state.boom=True
 if "tg_token" not in st.session_state: st.session_state.tg_token=""
 if "tg_chat" not in st.session_state: st.session_state.tg_chat=""
 if "morning_picks" not in st.session_state: st.session_state.morning_picks=[]
@@ -33,7 +30,7 @@ def get_logo():
         with open("logo.png","rb") as f: return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="64" style="border-radius:14px;">'
     except: return '<div style="font-size:42px;">💎</div>'
 
-st.markdown(f"""<div class="header-glass"><div style="display:flex; align-items:center; gap:16px;"><div>{get_logo()}</div><div><h1 style="margin:0; color:white; font-family:Inter; font-size:28px; font-weight:900; background: linear-gradient(90deg, white, #00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">FinTrade Premium</h1><p style="margin:2px 0 0 0; color:#00FF88; font-size:11px; font-weight:700; letter-spacing:2px;">V41.1 TRADINGVIEW FIX + 8AM PICKS</p></div></div></div>""", unsafe_allow_html=True)
+st.markdown(f"""<div class="header-glass"><div style="display:flex; align-items:center; gap:16px;"><div>{get_logo()}</div><div><h1 style="margin:0; color:white; font-family:Inter; font-size:28px; font-weight:900; background: linear-gradient(90deg, white, #00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">FinTrade Premium</h1><p style="margin:2px 0 0 0; color:#00FF88; font-size:11px; font-weight:700; letter-spacing:2px;">V41.2 CLEAN 8AM PICKS • NO HEADER</p></div></div></div>""", unsafe_allow_html=True)
 
 SMART_MAP={"CUPID":"CUPID.NS","IOCL":"IOC.NS","IOC":"IOC.NS","GAIL":"GAIL.NS","RELIANCE":"RELIANCE.NS","TCS":"TCS.NS","INFY":"INFY.NS","SBIN":"SBIN.NS","ATGL":"ATGL.NS","ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS","SUZLON":"SUZLON.NS","YESBANK":"YESBANK.NS","RVNL":"RVNL.NS","IRFC":"IRFC.NS","HDFCBANK":"HDFCBANK.NS","ICICIBANK":"ICICIBANK.NS","BHARTIARTL":"BHARTIARTL.NS","ITC":"ITC.NS"}
 WATCHLIST=["CUPID","RELIANCE","INFY","TCS","SBIN","HDFCBANK","ICICIBANK","BHARTIARTL","ITC","IOCL","GAIL","ATGL","ZOMATO","PAYTM","SUZLON","RVNL","IRFC","ADANIPOWER","YESBANK","BAJFINANCE"]
@@ -57,9 +54,6 @@ def get_live_price(tick):
             d=tk.history(period="1d",interval="1m"); p=float(d["Close"].dropna().iloc[-1]) if not d.empty else 0
         return float(p)
     except: return 0
-def send_tg(token, chat, msg):
-    try: requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id":chat,"text":msg,"parse_mode":"Markdown"}, timeout=10)
-    except: pass
 def calc_st(df, period=10, mult=3):
     hl2=(df['High']+df['Low'])/2; tr1=df['High']-df['Low']; tr2=(df['High']-df['Close'].shift()).abs(); tr3=(df['Low']-df['Close'].shift()).abs()
     tr=pd.concat([tr1,tr2,tr3],axis=1).max(axis=1); atr=tr.rolling(period).mean(); upper=hl2+mult*atr; lower=hl2-mult*atr
@@ -106,16 +100,15 @@ def get_morning_picks():
     st.session_state.morning_picks=picks; st.session_state.pick_date=today
     return picks
 
-now=datetime.now()
+# GREEN HEADER BOX REMOVED - DIRECT PICKS
 morning_picks=get_morning_picks()
 if morning_picks:
-    st.markdown(f"""<div class="morning-box"><h2 style="margin:0; color:#FFD700; font-weight:900;">🌅 8 AM AI PICKS - {date.today()} | {now.strftime('%I:%M %p')}</h2><p style="margin:4px 0 0 0; color:white; font-size:11px;">Trend + ST + MACD + RSI + Volume</p></div>""", unsafe_allow_html=True)
     c1,c2=st.columns(2)
     for i, pick in enumerate(morning_picks):
         col=c1 if i==0 else c2
         with col:
             st.markdown(f"""<div class="pick-card"><h3 style="margin:0; color:white;">#{i+1} {pick['name']} <span style="background:#00FF88; color:black; padding:4px 12px; border-radius:20px; font-size:12px; float:right;">BUY {pick['score']}/110</span></h3><p style="color:#00D1FF; font-size:22px; font-weight:900; margin:8px 0;">Rs {round(pick['live'],2)} <span style="color:#8892b0; font-size:12px;">RSI {pick['rsi']}</span></p><p style="color:#00FF88; font-size:11px;">✅ {' • '.join(pick['reasons'][:4])}</p></div>""", unsafe_allow_html=True)
-    if st.button("🔄 Refresh 8 AM Picks"):
+    if st.button("🔄 Refresh 8 AM Picks", use_container_width=True):
         st.session_state.pick_date=""; st.rerun()
 
 c1,c2=st.columns([5,1])
@@ -126,12 +119,11 @@ raw=user_input.upper().strip(); ticker=resolve_ticker(raw); df=load_data(ticker)
 if df.empty: st.error(f"{raw} not found"); st.stop()
 last=float(df["Close"].dropna().iloc[-1]); live=get_live_price(ticker)
 if live==0: live=last
-low_min=float(df["Low"].tail(20).min()); high_max=float(df["High"].tail(20).max())
-tgt=last+(last-low_min)*1.5;
-if tgt<=last: tgt=high_max
+low_min=float(df["Low"].tail(20).min())
+tgt=last+(last-low_min)*1.5
+if tgt<=last: tgt=float(df["High"].tail(20).max())
 close=df["Close"]; ema20=close.ewm(20).mean(); ema50=close.ewm(50).mean()
 sig="BUY" if ema20.iloc[-1]>ema50.iloc[-1] and last>ema20.iloc[-1] else "SELL" if ema20.iloc[-1]<ema50.iloc[-1] else "HOLD"
-sig_color="#00FF88" if sig=="BUY" else "#FF4D6A" if sig=="SELL" else "#FFAA00"
 sig_class="buy-neon" if sig=="BUY" else "sell-neon"
 trend="UPTREND" if ema20.iloc[-1]>ema50.iloc[-1] else "DOWNTREND"
 df_c=df.tail(100).copy(); m_line,s_line,hist=calc_macd(df_c["Close"]); st_line,st_dir=calc_st(df_c)
@@ -156,26 +148,14 @@ with tab_chart:
     fig.add_trace(go.Bar(x=df_c.index, y=hist, marker_color=colors), row=2, col=1)
     fig.add_trace(go.Scatter(x=df_c.index, y=rsi, line=dict(color="#C084FC",width=2), name="RSI"), row=3, col=1)
     fig.update_layout(template="plotly_dark", height=600, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_rangeslider_visible=False, margin=dict(l=0,r=0,t=10,b=0), dragmode=False)
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': True, 'doubleClick': 'reset'})
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    # === FIXED TRADINGVIEW - NSE SYMBOL ===
     clean_sym = raw.replace(".NS","").replace(".BO","").strip()
-    # NSE pe CUPID, RELIANCE sab available hai
     tv_symbol = f"NSE:{clean_sym}"
-    st.markdown(f"### 📊 TradingView Pro - {tv_symbol}")
-
-    # Method 1: New Working Widget (NSE)
-    tv_iframe_url = f"https://s.tradingview.com/widgetembed/?frameElementId=tradingview_123&symbol={tv_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Asia%2FKolkata&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=&utm_medium=widget&utm_campaign=chart&utm_term={tv_symbol}"
-
+    st.markdown(f"### 📊 TradingView - {tv_symbol}")
+    tv_iframe_url = f"https://s.tradingview.com/widgetembed/?frameElementId=tradingview_123&symbol={tv_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&theme=dark&style=1&timezone=Asia%2FKolkata"
     st.components.v1.iframe(tv_iframe_url, height=550, scrolling=True)
-
-    # Fallback buttons
-    col1,col2=st.columns(2)
-    with col1:
-        st.link_button(f"🔗 Open {clean_sym} on TradingView", f"https://www.tradingview.com/chart/?symbol=NSE%3A{clean_sym}", use_container_width=True)
-    with col2:
-        st.link_button(f"📈 Open {clean_sym} on BSE", f"https://www.tradingview.com/chart/?symbol=BSE%3A{clean_sym}", use_container_width=True)
-    st.caption("Agar upar chart blank hai to button dabao - TradingView direct khulega. Tablet pe kabhi kabhi iframe block hota hai.")
+    st.link_button(f"🔗 Open {clean_sym} on TradingView", f"https://www.tradingview.com/chart/?symbol=NSE%3A{clean_sym}", use_container_width=True)
 
 with tab_screen:
     if st.button("🚀 SCAN ALL NOW", use_container_width=True):
