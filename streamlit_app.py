@@ -20,7 +20,7 @@ def get_logo():
     except:
         return '<div style="font-size:40px;">💎</div>'
 
-st.markdown(f"""<div class="header-box"><div style="display:flex; align-items:center; gap:16px;"><div>{get_logo()}</div><div><h1 style="margin:0; color:white; font-size:28px;">FinTrade Premium</h1><p style="margin:0; color:#8892b0; font-size:10px;">V37.4 FINAL - TradingView BACK + No Toolbar + No Box</p></div></div></div>""", unsafe_allow_html=True)
+st.markdown(f"""<div class="header-box"><div style="display:flex; align-items:center; gap:16px;"><div>{get_logo()}</div><div><h1 style="margin:0; color:white; font-size:28px;">FinTrade Premium</h1><p style="margin:0; color:#8892b0; font-size:10px;">V38 - NO PROFIT | CLEAN CHART + TV + ALERTS + TELEGRAM</p></div></div></div>""", unsafe_allow_html=True)
 
 SMART_MAP={"IOCL":"IOC.NS","IOC":"IOC.NS","GAIL":"GAIL.NS","CUPID":"CUPID.NS","RELIANCE":"RELIANCE.NS","TCS":"TCS.NS","INFY":"INFY.NS","SBIN":"SBIN.NS","ADANITOTALGAS":"ATGL.NS","ATGL":"ATGL.NS","ADANIGREEN":"ADANIGREEN.NS","ADANIENT":"ADANIENT.NS","ADANIPORTS":"ADANIPORTS.NS","ADANIPOWER":"ADANIPOWER.NS","ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS","SUZLON":"SUZLON.NS","YESBANK":"YESBANK.NS","RVNL":"RVNL.NS","IRFC":"IRFC.NS"}
 
@@ -134,7 +134,8 @@ st.session_state.last_st=st_sig
 
 st.markdown(f"""<div class="top-pin"><div style="display:flex; justify-content:space-between;"><div><h2 style="color:white; margin:0; font-size:20px;">{raw} <span style="color:#8892b0; font-size:11px;">{ticker}</span> <span style="background:{sig_color}; color:black; padding:4px 12px; border-radius:20px; font-size:11px;">{sig}</span> <span style="background:{st_color}; color:black; padding:4px 10px; border-radius:20px; font-size:10px;">ST {st_sig}</span></h2><p style="color:#00D1FF; margin:6px 0 0 0; font-size:11px;">LIVE {round(live,2)} | Target {round(tgt,2)} | SL {round(low_min,2)}</p></div><div style="text-align:right;"><p style="color:{sig_color}; font-size:26px; font-weight:900; margin:0;">Rs {round(live,2)}</p></div></div></div>""", unsafe_allow_html=True)
 
-tab_chart, tab_profit, tab_alert, tab_tg = st.tabs(["📈 Chart + TradingView", "💰 Profit", "🔔 ALERTS", "📲 TELEGRAM"])
+# PROFIT HATA DIYA - SIRF 3 TABS
+tab_chart, tab_alert, tab_tg = st.tabs(["📈 Chart + TradingView", "🔔 ALERTS + BOOM", "📲 TELEGRAM"])
 
 with tab_chart:
     close_c=df_c["Close"]
@@ -164,16 +165,9 @@ with tab_chart:
     fig.update_layout(template="plotly_dark", height=650, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_rangeslider_visible=False, showlegend=True, legend=dict(orientation="h", y=1.02, x=0, font=dict(size=9)), margin=dict(l=0,r=0,t=40,b=0), dragmode=False, hovermode="x unified")
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': True, 'doubleClick': 'reset', 'displaylogo': False})
     bse_sym=ticker.replace(".NS","").replace(".BO","")
-    st.markdown("### 📊 TradingView Live - IOCL")
+    st.markdown("### 📊 TradingView Live")
     st.components.v1.iframe(f"https://s.tradingview.com/widgetembed/?symbol=BSE%3A{bse_sym}&interval=D&theme=dark&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies", height=500)
-    st.success("✅ TradingView wapas aa gaya! No toolbar, No box")
-
-with tab_profit:
-    qty=st.number_input("Qty", min_value=1, value=100, step=1)
-    buy_val=live*qty
-    target_val=tgt*qty
-    profit=target_val-buy_val
-    st.metric("Profit at Target", f"Rs {round(profit,2)}", delta=f"{round((profit/buy_val)*100,2)}%")
+    st.success("✅ Clean - Profit hata diya")
 
 with tab_alert:
     st.session_state.boom=st.toggle("🔊 BOOM Sound ON", value=st.session_state.boom)
@@ -190,4 +184,4 @@ with tab_tg:
         st.session_state.tg_chat=chat
         st.success("Saved!")
 
-st.caption("V37.4 FINAL - TradingView BACK - Clean chart")
+st.caption("V38 FINAL - No Profit, No toolbar, No box - Clean chart + TV")
