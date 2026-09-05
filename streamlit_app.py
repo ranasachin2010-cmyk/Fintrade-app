@@ -4,7 +4,7 @@ import base64, requests, re
 from datetime import date, datetime
 import pytz
 
-st.set_page_config(page_title="FinTrade God V44.1 SMART", layout="wide", page_icon="💎")
+st.set_page_config(page_title="FinTrade V44.2 FIXED", layout="wide", page_icon="💎")
 
 st.markdown("""
 <style>
@@ -18,7 +18,7 @@ st.markdown("""
 .buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
 .stTextInput>div>div>input{background: rgba(255,255,255,0.06)!important; border: 1.5px solid rgba(255,255,255,0.12)!important; border-radius: 20px!important; color: white!important; font-family: JetBrains Mono!important; font-weight: 800!important; font-size: 18px!important; height: 64px!important;}
 .stButton>button{background: linear-gradient(135deg, #00D1FF 0%, #7000FF 50%, #00FF88 100%)!important; border: none!important; border-radius: 18px!important; color: white!important; font-weight: 700!important; height: 64px!important;}
-.score-ring{width: 56px; height: 56px; border-radius: 50%; background: conic-gradient(#00FF88 var(--p), rgba(255,255,255,0.1) 0); display: flex; align-items: center; justify-content: center; position: relative;}
+.score-ring{width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;}
 .score-ring::before{content:''; position: absolute; inset: 4px; background: #0a1220; border-radius: 50%;}
 .target-row{display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 10px 12px; background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.06)); border: 1px solid rgba(0,255,136,0.25); border-left: 3px solid #00FF88; border-radius: 12px;}
 .win-badge{background: rgba(0,209,255,0.15); border:1px solid #00D1FF; color:#00D1FF; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono; font-weight:700; margin-top:8px; display:inline-block;}
@@ -119,23 +119,19 @@ def score_stock(df):
         return score, reasons, round(rsi.iloc[-1],1)
     except: return 0, [], 50
 
-# --- V44.1 SMART ATR TARGET LOGIC ---
 def get_smart_target(df, live, score):
     try:
         atr = float((df["High"] - df["Low"]).tail(14).mean())
         atr_pct = (atr / live * 100) if live>0 else 2.0
-        # SMART LOGIC: Volatility * 2.5, but min 3.5% max 12%
         base_pct = atr_pct * 2.5
-        # Score ke hisab se boost
         if score>=100: base_pct *= 1.2
         elif score>=90: base_pct *= 1.1
         profit_pct = round(min(max(base_pct, 3.5), 12.0), 1)
         target = live * (1 + profit_pct/100)
-        sl = live * (1 - (profit_pct/2)/100) # SL = Target ka half
+        sl = live * (1 - (profit_pct/2)/100)
         return profit_pct, target, sl, atr_pct
     except:
-        profit_pct = 8 if score>=90 else 5
-        return profit_pct, live*1.08, live*0.96, 2.0
+        return 8.0, live*1.08, live*0.96, 2.0
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def backtest_winrate(ticker):
@@ -150,7 +146,6 @@ def backtest_winrate(ticker):
             if sc>=80:
                 total+=1
                 entry = float(df["Close"].iloc[i])
-                # Smart target for backtest too
                 atr = float((slice_df["High"] - slice_df["Low"]).tail(14).mean())
                 atr_pct = (atr / entry * 100) if entry>0 else 2
                 target_pct = min(max(atr_pct*2.5, 3.5), 12)
@@ -182,7 +177,7 @@ st.markdown(f"""
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
-     <span class="auto-badge">● V44.1 SMART ATR</span>
+     <span class="auto-badge">● V44.2 FIXED</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
      {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
@@ -191,7 +186,7 @@ st.markdown(f"""
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V44.1 SMART</p><p style="margin:2px 0 0 0; color:#FFD700; font-family:Space Grotesk; font-size:10px; font-weight:700;">ATR TARGET • REALISTIC</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V44.2 FIXED</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">KEYERROR FIXED</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -207,7 +202,13 @@ def resolve_ticker(t):
 
 def get_morning_picks():
     today=str(date.today())
-    if st.session_state.pick_date==today and st.session_state.morning_picks: return st.session_state.morning_picks
+    if "morning_picks" in st.session_state and st.session_state.morning_picks:
+        first = st.session_state.morning_picks[0]
+        if "atr_pct" not in first or "win_pct" not in first:
+            st.session_state.morning_picks=[]
+            st.session_state.pick_date=""
+    if st.session_state.pick_date==today and st.session_state.morning_picks:
+        return st.session_state.morning_picks
     picks=[]
     for name in WATCHLIST:
         t=resolve_ticker(name); df=load_data(t)
@@ -228,9 +229,9 @@ now_ist = datetime.now(ist)
 today_str = str(date.today())
 if now_ist.hour == 9 and now_ist.minute >= 15 and now_ist.minute <= 20:
     if st.session_state.last_auto_sent!= today_str and st.session_state.tg_token and st.session_state.tg_chat and morning_picks:
-        msg = f"🌅 *FinTrade V44.1 SMART ATR - {today_str}*\n\n"
+        msg = f"🌅 FinTrade V44.2 FIXED - {today_str}\n\n"
         for i, p in enumerate(morning_picks, 1):
-            msg += f"#{i} *{p['name']}* - ₹{round(p['live'],2)} Win {p['win_pct']}% ATR {p['atr_pct']:.1f}%\nTarget: ₹{round(p['target'],2)} (+{p['profit_pct']}%) SL: ₹{round(p['sl'],2)}\nScore: {p['score']}/110 BUY ✅\n\n"
+            msg += f"#{i} {p['name']} - Rs{round(p['live'],2)} Win {p.get('win_pct',0)}% ATR {p.get('atr_pct',0):.1f}%\nTarget: Rs{round(p['target'],2)} (+{p['profit_pct']}%) SL: Rs{round(p['sl'],2)}\nScore: {p['score']}/110 BUY\n\n"
         send_tg(st.session_state.tg_token, st.session_state.tg_chat, msg)
         st.session_state.last_auto_sent = today_str
 
@@ -238,15 +239,49 @@ if morning_picks:
     c1,c2=st.columns(2)
     for i, pick in enumerate(morning_picks):
         col=c1 if i==0 else c2
-        pct=int(pick['score']/110*100)
+        score = pick.get("score",0)
+        pct=int(score/110*100) if score>0 else 0
+        live_p = pick.get("live",0)
+        target_p = pick.get("target",0)
+        profit_p = pick.get("profit_pct",0)
+        sl_p = pick.get("sl",0)
+        win_p = pick.get("win_pct",0)
+        wins_p = pick.get("wins",0)
+        total_p = pick.get("total",0)
+        atr_p = pick.get("atr_pct",2.0)
+        rsi_p = pick.get("rsi",0)
+        reasons_p = pick.get("reasons",[])
+        name_p = pick.get("name","")
+        reasons_text = " • ".join(reasons_p[:3])
         with col:
-            st.markdown(f"""<div class="pick-god"><div style="display:flex; justify-content:space-between;"><div><span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} TOP PICK</span><h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick['name']}</h2><p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:24px; font-weight:800;">₹{round(pick['live'],2)} <span style="color:#8892b0; font-size:11px;">RSI {pick['rsi']}</span></p><p style="margin:6px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{' • '.join(pick['reasons'][:3])}</p><span class="win-badge">📊 {pick['win_pct']}% Win ({pick['wins']}/{pick['total']})</span><span class="atr-badge">ATR {pick['atr_pct']:.1f}% • Smart</span></div><div style="text-align:center;"><div class="score-ring" style="--p:{pct}%;"><span style="position:relative; z-index:2; color:white; font-family:Space Grotesk; font-weight:700; font-size:14px;">{pick['score']}</span></div><div style="margin-top:10px; background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:9px; padding:5px 12px; border-radius:100px; font-weight:700;">BUY</div></div></div><div class="target-row"><div><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SMART TARGET</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:16px; font-weight:700;">₹{round(pick['target'],2)}</p></div><div style="text-align:center;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-size:14px; font-weight:800; background: rgba(0,255,136,0.15); padding:3px 10px; border-radius:100px;">▲ +{pick['profit_pct']}%</p></div><div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">STOP LOSS</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-size:12px; font-weight:700;">₹{round(pick['sl'],2)}</p></div></div></div>""", unsafe_allow_html=True)
-    if st.button("↻ Refresh SMART ATR + Backtest", use_container_width=True):
-        st.session_state.pick_date=""; st.rerun()
+            st.markdown(f"""
+            <div class="pick-god">
+              <div style="display:flex; justify-content:space-between;">
+                <div>
+                  <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} TOP PICK</span>
+                  <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{name_p}</h2>
+                  <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:24px; font-weight:800;">Rs{round(live_p,2)} <span style="color:#8892b0; font-size:11px;">RSI {rsi_p}</span></p>
+                  <p style="margin:6px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{reasons_text}</p>
+                  <span class="win-badge">Win {win_p}% ({wins_p}/{total_p})</span><span class="atr-badge">ATR {atr_p:.1f}% Smart</span>
+                </div>
+                <div style="text-align:center;">
+                  <div class="score-ring" style="background: conic-gradient(#00FF88 {pct}%, rgba(255,255,255,0.1) 0);"><span style="position:relative; z-index:2; color:white; font-family:Space Grotesk; font-weight:700; font-size:14px;">{score}</span></div>
+                  <div style="margin-top:10px; background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:9px; padding:5px 12px; border-radius:100px; font-weight:700;">BUY</div>
+                </div>
+              </div>
+              <div class="target-row">
+                <div><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">TARGET</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:16px; font-weight:700;">Rs{round(target_p,2)}</p></div>
+                <div style="text-align:center;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-size:14px; font-weight:800; background: rgba(0,255,136,0.15); padding:3px 10px; border-radius:100px;">+{profit_p}%</p></div>
+                <div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SL</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-size:12px; font-weight:700;">Rs{round(sl_p,2)}</p></div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+    if st.button("Refresh SMART ATR + Backtest", use_container_width=True):
+        st.session_state.pick_date=""; st.session_state.morning_picks=[]; st.rerun()
 
 c1,c2=st.columns([5.2,1])
 with c1: user_input=st.text_input("search", value="CUPID", placeholder="Search BSE symbol...", label_visibility="collapsed")
-with c2: st.button("SEARCH ↗", use_container_width=True)
+with c2: st.button("SEARCH", use_container_width=True)
 
 raw=user_input.upper().strip(); ticker=resolve_ticker(raw); df=load_data(ticker)
 if df.empty: st.error(f"{raw} not found"); st.stop()
@@ -260,14 +295,43 @@ st_sig="BUY" if st_dir.iloc[-1]==1 else "SELL"; st_color="#00FF88" if st_sig=="B
 profit_main, tgt, sl_main, atr_main = get_smart_target(df, live, 90)
 win_pct_main, wins_main, total_main = backtest_winrate(ticker)
 
-st.markdown(f"""<div class="top-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="display:flex; align-items:center; gap:14px;"><h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw}</h2><span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-family:JetBrains Mono; font-size:10px; padding:5px 10px; border-radius:100px;">BSE:{raw}</span><span style="background: {st_color}18; border:1px solid {st_color}; color:{st_color}; font-family:Space Grotesk; font-size:10px; font-weight:700; padding:5px 12px; border-radius:100px;">ST {st_sig}</span><span style="background: rgba(255,215,0,0.15); border:1px solid #FFD700; color:#FFD700; font-family:JetBrains Mono; font-size:10px; padding:5px 10px; border-radius:100px;">ATR {atr_main:.1f}% • {win_pct_main}% Win</span></div><div style="display:flex; gap:16px; margin-top:16px;"><div style="background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.04)); border:1px solid rgba(0,255,136,0.25); border-left:3px solid #00FF88; border-radius:10px; padding:8px 14px;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SMART TARGET + PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">₹{round(tgt,2)} <span style="background: #00FF88; color:black; padding:2px 6px; border-radius:100px; font-size:10px;">▲ +{profit_main}%</span></p></div><div style="background: rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.2); border-radius:10px; padding:8px 14px;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SMART SL</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">₹{round(sl_main,2)}</p></div></div><p style="margin:12px 0 0 0; color:#FFD700; font-size:10px; font-family:JetBrains Mono;">🎯 ATR Based: Volatility {atr_main:.2f}% × 2.5 = {profit_main}% Target | Backtest: {wins_main}/{total_main} wins ({win_pct_main}%)</p></div><div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:9px; font-family:JetBrains Mono; letter-spacing:2px;">LIVE BSE PRICE</p><p class="live-price">₹{round(live,2)}</p><div class="{sig_class}" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">{sig} ↗</div></div></div></div>""", unsafe_allow_html=True)
+st.markdown(f"""
+<div class="top-god">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw}</h2>
+        <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-family:JetBrains Mono; font-size:10px; padding:5px 10px; border-radius:100px;">BSE:{raw}</span>
+        <span style="background: {st_color}18; border:1px solid {st_color}; color:{st_color}; font-family:Space Grotesk; font-size:10px; font-weight:700; padding:5px 12px; border-radius:100px;">ST {st_sig}</span>
+        <span style="background: rgba(255,215,0,0.15); border:1px solid #FFD700; color:#FFD700; font-family:JetBrains Mono; font-size:10px; padding:5px 10px; border-radius:100px;">ATR {atr_main:.1f}% {win_pct_main}% Win</span>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:16px;">
+        <div style="background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.04)); border:1px solid rgba(0,255,136,0.25); border-left:3px solid #00FF88; border-radius:10px; padding:8px 14px;">
+          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SMART TARGET</p>
+          <p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">Rs{round(tgt,2)} +{profit_main}%</p>
+        </div>
+        <div style="background: rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.2); border-radius:10px; padding:8px 14px;">
+          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SMART SL</p>
+          <p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">Rs{round(sl_main,2)}</p>
+        </div>
+      </div>
+      <p style="margin:12px 0 0 0; color:#FFD700; font-size:10px; font-family:JetBrains Mono;">ATR Volatility {atr_main:.2f}% x 2.5 = {profit_main}% Target | Backtest {wins_main}/{total_main} wins ({win_pct_main}%)</p>
+    </div>
+    <div style="text-align:right;">
+      <p style="margin:0; color:#8892b0; font-size:9px; font-family:JetBrains Mono; letter-spacing:2px;">LIVE PRICE</p>
+      <p class="live-price">Rs{round(live,2)}</p>
+      <div class="{sig_class}" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">{sig}</div>
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-tab_bse, tab_chart, tab_tg = st.tabs(["📊 BSE TradingView PRO", "📈 Plotly", "📲 Telegram"])
+tab_bse, tab_chart, tab_tg = st.tabs(["BSE TradingView PRO", "Plotly", "Telegram"])
 
 with tab_bse:
     clean_sym = raw.replace(".NS","").replace(".BO","").strip()
     bse_symbol = f"BSE:{clean_sym}"
-    st.markdown(f"""<div style="background: linear-gradient(90deg, #FF6A00, #FFD700); padding: 12px 16px; border-radius: 14px; margin-bottom:12px;"><span style="font-family:Space Grotesk; font-weight:700; color:black;">{bse_symbol} • ATR {atr_main:.1f}% • {win_pct_main}% Win • Smart Target</span></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div style="background: linear-gradient(90deg, #FF6A00, #FFD700); padding: 12px 16px; border-radius: 14px; margin-bottom:12px;"><span style="font-family:Space Grotesk; font-weight:700; color:black;">{bse_symbol} - ATR {atr_main:.1f}% - {win_pct_main}% Win - Smart Target</span></div>""", unsafe_allow_html=True)
     tv_bse_pro = f"https://s.tradingview.com/widgetembed/?frameElementId=tv_final&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
     st.components.v1.iframe(tv_bse_pro, height=700, scrolling=False)
 
@@ -289,17 +353,17 @@ with tab_chart:
     st.plotly_chart(fig, use_container_width=True)
 
 with tab_tg:
-    st.markdown("### 📲 Telegram + Smart ATR")
+    st.markdown("### Telegram + Smart ATR")
     tok=st.text_input("Bot Token", value=st.session_state.tg_token, type="password")
     chat=st.text_input("Chat ID", value=st.session_state.tg_chat)
-    if st.button("💾 Save & Test Now"):
+    if st.button("Save & Test Now"):
         st.session_state.tg_token=tok; st.session_state.tg_chat=chat
         if morning_picks:
-            msg = f"✅ *V44.1 SMART ATR Test - {today_str}*\n"
+            msg = f"V44.2 FIXED Test - {today_str}\n"
             for i, p in enumerate(morning_picks, 1):
-                msg += f"#{i} *{p['name']}* ₹{round(p['live'],2)} ATR {p['atr_pct']:.1f}% Win {p['win_pct']}%\nTarget {p['profit_pct']}% SL {(p['profit_pct']/2):.1f}%\n"
+                msg += f"#{i} {p.get('name')} Rs{round(p.get('live',0),2)} ATR {p.get('atr_pct',0):.1f}% Win {p.get('win_pct',0)}%\nTarget {p.get('profit_pct')}% SL {(p.get('profit_pct',0)/2):.1f}%\n"
             send_tg(tok, chat, msg)
-            st.success("✅ Sent!")
+            st.success("Sent!")
 
-st.warning("⚠️ Disclaimer: Educational only. ATR target = realistic volatility based. Past win rate!= future guarantee.")
-st.caption(f"V44.1 SMART ATR • Realistic Target 3.5-12% • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+st.warning("Disclaimer: Educational only. ATR target = realistic volatility based. Past win rate not future guarantee.")
+st.caption(f"V44.2 FIXED • KeyError Fixed • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
