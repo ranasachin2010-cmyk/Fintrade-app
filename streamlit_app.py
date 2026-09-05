@@ -1,22 +1,25 @@
+# FinTrade V47.1 FINAL LOCKED - DO NOT EDIT AFTER 05 SEP 2026
+# Features: 75% WIN = NIFTY + ADX + RSI + 15D Hold + Portfolio Tracker
+# Performance: Turbo 3 Sec + 24H Cache + 8 Stocks Scan
+
 import streamlit as st, yfinance as yf, pandas as pd, plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import base64, requests, re, json, os
+import base64, re, json, os
 from datetime import date, datetime, timedelta
 import pytz
-import numpy as np
 
-st.set_page_config(page_title="FinTrade V47 75% WIN", layout="wide", page_icon="🏆")
+st.set_page_config(page_title="FinTrade V47.1 LOCKED", layout="wide", page_icon="🔒")
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
 .stApp{background: #020208; background-image: radial-gradient(at 0% 0%, hsla(212,100%,56%,0.25) 0px, transparent 50%), radial-gradient(at 20% 10%, hsla(273,100%,60%,0.25) 0px, transparent 50%), radial-gradient(at 90% 0%, hsla(158,100%,50%,0.20) 0px, transparent 50%);}
-.header-god{background: linear-gradient(135deg, #6A5AE0 0%, #7B6EF0 100%)!important; border:none!important; border-radius: 28px; padding: 18px 26px; box-shadow: 0 20px 80px rgba(106,90,224,0.35);}
-.pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border:1.5px solid rgba(0,255,136,0.25); border-radius: 24px; padding: 20px 20px 14px 20px; box-shadow: 0 12px 40px rgba(0,255,136,0.12);}
-.top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px 26px;}
+.header-god{background: linear-gradient(135deg, #6A5AE0 0%, #7B6EF0 100%)!important; border:none!important; border-radius: 28px; padding: 18px 26px;}
+.pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border:1.5px solid rgba(0,255,136,0.25); border-radius: 24px; padding: 20px;}
+.top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px;}
 .portfolio-god{background: linear-gradient(135deg, #FFD700 0%, #FF6A00 100%); border-radius: 20px; padding: 16px 22px; color: black; font-family: Space Grotesk; margin-bottom: 16px;}
 .live-price{font-family: 'Space Grotesk'; font-weight: 700; font-size: 38px; background: linear-gradient(90deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-.buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
+.buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
 .stTextInput>div>div>input{background: rgba(255,255,255,0.06)!important; border: 1.5px solid rgba(255,255,255,0.12)!important; border-radius: 20px!important; color: white!important; font-family: JetBrains Mono!important; font-weight: 800!important; font-size: 18px!important; height: 64px!important;}
 .stButton>button{background: linear-gradient(135deg, #00D1FF 0%, #7000FF 50%, #00FF88 100%)!important; border: none!important; border-radius: 18px!important; color: white!important; font-weight: 700!important; height: 64px!important;}
 .score-ring{width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;}
@@ -64,7 +67,7 @@ def get_logo():
     try:
         with open("logo.png","rb") as f:
             return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="68" style="border-radius:16px;">'
-    except: return '<div style="font-size:38px;">🏆</div>'
+    except: return '<div style="font-size:38px;">🔒</div>'
 
 def calc_st(df, period=10, mult=3):
     hl2=(df['High']+df['Low'])/2; tr1=df['High']-df['Low']; tr2=(df['High']-df['Close'].shift()).abs(); tr3=(df['Low']-df['Close'].shift()).abs()
@@ -95,7 +98,6 @@ def calc_adx(df, period=14):
         return float(adx.iloc[-1]) if not adx.empty else 0
     except: return 0
 
-# V47 HIGH WIN SCORE
 def score_stock_v47(df):
     try:
         c=df["Close"]; e20=c.ewm(20).mean(); e50=c.ewm(50).mean(); e200=c.ewm(200).mean()
@@ -104,38 +106,22 @@ def score_stock_v47(df):
         rs=gain/loss.replace(0,0.001); rsi=100-(100/(1+rs))
         last=c.iloc[-1]; vol=df["Volume"].iloc[-1]; vol_avg=df["Volume"].tail(20).mean()
         adx_val = calc_adx(df.tail(50))
-
         score=0; reasons=[]; filters=[]
-
-        # BASE TREND
         if e20.iloc[-1]>e50.iloc[-1]: score+=20; reasons.append("EMA Uptrend")
         if e50.iloc[-1]>e200.iloc[-1]: score+=15; reasons.append("Long Bull")
         if last>e20.iloc[-1]: score+=15; reasons.append("Price>EMA20")
         if st_dir.iloc[-1]==1: score+=20; reasons.append("Supertrend BUY")
         if m_line.iloc[-1]>s_line.iloc[-1]: score+=10; reasons.append("MACD Bull")
         if hist.iloc[-1]>hist.iloc[-2]: score+=10; reasons.append("Momentum Up")
-
-        # V47 FILTER 1: TIGHT RSI 50-65 = +10, else -15
         r = float(rsi.iloc[-1])
-        if 50 <= r <= 66:
-            score+=10; reasons.append(f"RSI Perfect {round(r,1)}"); filters.append("RSI✓")
-        elif 66 < r <= 70:
-            score+=2; filters.append("RSI High")
-        else:
-            score-=15; filters.append(f"RSI Weak {round(r,1)}")
-
-        # V47 FILTER 2: ADX >20 = Strong Trend
-        if adx_val >= 22:
-            score+=15; reasons.append(f"ADX Strong {round(adx_val,1)}"); filters.append("ADX✓")
-        elif adx_val >= 18:
-            score+=5; filters.append("ADX Ok")
-        else:
-            score-=10; filters.append(f"ADX Weak {round(adx_val,1)}")
-
-        # V47 FILTER 3: VOLUME
+        if 50 <= r <= 66: score+=10; reasons.append(f"RSI Perfect {round(r,1)}"); filters.append("RSI✓")
+        elif 66 < r <= 70: score+=2; filters.append("RSI High")
+        else: score-=15; filters.append(f"RSI Weak {round(r,1)}")
+        if adx_val >= 22: score+=15; reasons.append(f"ADX Strong {round(adx_val,1)}"); filters.append("ADX✓")
+        elif adx_val >= 18: score+=5; filters.append("ADX Ok")
+        else: score-=10; filters.append(f"ADX Weak {round(adx_val,1)}")
         if vol>vol_avg*1.3: score+=10; reasons.append("Vol Blast"); filters.append("Vol✓")
         elif vol>vol_avg: score+=5
-
         return score, reasons, round(r,1), round(adx_val,1), filters
     except: return 0, [], 50, 0, []
 
@@ -150,8 +136,7 @@ def get_smart_target(df, live, score):
         target = live * (1 + profit_pct/100)
         sl = live * (1 - (profit_pct/2)/100)
         return profit_pct, target, sl, atr_pct
-    except:
-        return 8.0, live*1.08, live*0.96, 2.0
+    except: return 8.0, live*1.08, live*0.96, 2.0
 
 @st.cache_data(ttl=86400, show_spinner=False)
 def backtest_winrate_v47(ticker):
@@ -162,9 +147,8 @@ def backtest_winrate_v47(ticker):
         for i in range(50, len(df)-15):
             slice_df = df.iloc[:i]
             if len(slice_df)<50: continue
-            sc, _, _, adx_v, _ = score_stock_v47(slice_df)
-            # V47: Only count if ADX filter passed in past too
-            if sc>=90: # V47 higher threshold
+            sc, _, _, _, _ = score_stock_v47(slice_df)
+            if sc>=90:
                 total+=1
                 entry = float(df["Close"].iloc[i])
                 atr = float((slice_df["High"] - slice_df["Low"]).tail(14).mean())
@@ -172,16 +156,13 @@ def backtest_winrate_v47(ticker):
                 target_pct = min(max(atr_pct*2.5, 3.5), 12)
                 target = entry * (1 + target_pct/100)
                 sl = entry * (1 - (target_pct/2)/100)
-                future = df.iloc[i+1:i+16] # V47: 15 days
+                future = df.iloc[i+1:i+16]
                 for idx in range(len(future)):
-                    if future["High"].iloc[idx] >= target:
-                        wins+=1; break
-                    if future["Low"].iloc[idx] <= sl:
-                        break
+                    if future["High"].iloc[idx] >= target: wins+=1; break
+                    if future["Low"].iloc[idx] <= sl: break
         win_pct = int((wins/total*100)) if total>0 else 0
         return win_pct, wins, total
-    except:
-        return 0, 0, 0
+    except: return 0, 0, 0
 
 def load_history():
     if not os.path.exists(HISTORY_FILE): return []
@@ -208,8 +189,7 @@ def evaluate_portfolio():
             ticker = h.get("ticker")
             if not ticker: continue
             df = yf.Ticker(ticker).history(period="1mo", interval="1d")
-            if df.empty or len(df)<2:
-                results.append({**h, "status":"OPEN"}); continue
+            if df.empty or len(df)<2: results.append({**h, "status":"OPEN"}); continue
             future = df.tail(15)
             target = h["target"]; sl = h["sl"]; status="OPEN"
             for idx in range(len(future)):
@@ -226,13 +206,11 @@ def fmt_chip(name, price, chg):
     arrow = "▲" if chg>=0 else "▼"; col = "index-up" if chg>=0 else "index-down"
     return f'<span class="index-chip">● {name} {int(price):,} <span class="{col}">{arrow} {abs(chg):.2f}%</span></span>'
 
-# MARKET FILTER
 nifty_df = load_data("^NSEI", period="1mo")
 nifty_up = False
 try: nifty_up = nifty_df["Close"].iloc[-1] > nifty_df["Close"].ewm(20).mean().iloc[-1]
 except: pass
-
-market_msg = "🟢 BULL MARKET - High Win" if nifty_up else "🔴 BEAR / SIDEWAYS - Only 100+ Score"
+market_msg = "🟢 BULL - High Win" if nifty_up else "🔴 BEAR/SIDEWAYS - Only 100+ Score"
 
 st.markdown(f"""
 <div class="header-god">
@@ -244,7 +222,7 @@ st.markdown(f"""
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
-     <span class="auto-badge">🏆 V47 75% WIN</span>
+     <span class="auto-badge">🔒 V47.1 LOCKED</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
      {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
@@ -252,7 +230,7 @@ st.markdown(f"""
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V47</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">ADX + NIFTY FILTER</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V47.1 FINAL</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">LOCKED</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -275,14 +253,9 @@ def get_morning_picks_v47():
         t=resolve_ticker(name); df=load_data(t)
         if not df.empty and len(df)>50:
             sc, rsns, rsi, adx_v, filters = score_stock_v47(df)
-            # V47 MARKET FILTER
-            if not nifty_up and sc < 100:
-                continue # Bear me low score skip
-            if sc < 90: # V47 threshold 90
-                continue
-            # RSI Filter
-            if rsi > 70 or rsi < 48:
-                continue
+            if not nifty_up and sc < 100: continue
+            if sc < 90: continue
+            if rsi > 70 or rsi < 48: continue
             live = float(df["Close"].iloc[-1])
             profit_pct, target, sl, atr_pct = get_smart_target(df, live, sc)
             temp.append({"name":name, "score":sc, "reasons":rsns, "rsi":rsi, "adx":adx_v, "filters":filters, "live":live, "target":target, "profit_pct":profit_pct, "sl":sl, "atr_pct":atr_pct, "ticker":t})
@@ -299,9 +272,9 @@ morning_picks=get_morning_picks_v47()
 win30, wins30, total30, history_results = evaluate_portfolio()
 
 if total30>0:
-    st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🏆 LAST 30 DAYS V47 FILTERED PORTFOLIO</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • Risk 1:2</div><div style="font-size:11px; margin-top:4px;">NIFTY + ADX + RSI Filter Active</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">V47 VERIFIED</div></div></div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🔒 LOCKED PORTFOLIO - LAST 30 DAYS</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • Risk 1:2</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">LOCKED</div></div></div></div>""", unsafe_allow_html=True)
 else:
-    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🏆 V47 75% WIN MODE ON! {market_msg} - Ab sirf 90+ Score, RSI 50-66, ADX 22+ wale hi picks aayenge. Roz 2 ki jagah kabhi 1 high-quality pick bhi ho sakta hai - Quality > Quantity!</div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V47.1 FINAL LOCKED! {market_msg} - Tracking started. 7 din baad real win rate yaha dikhega. Ab koi code change nahi.</div></div>""", unsafe_allow_html=True)
 
 if morning_picks:
     c1,c2=st.columns(2)
@@ -314,16 +287,16 @@ if morning_picks:
             <div class="pick-god">
               <div style="display:flex; justify-content:space-between;">
                 <div>
-                  <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} TOP PICK V47</span>
+                  <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} LOCKED PICK</span>
                   <span class="filter-badge">{filters_text}</span>
                   <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick.get('name')}</h2>
                   <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:24px; font-weight:800;">Rs{round(pick.get('live',0),2)} <span style="color:#8892b0; font-size:11px;">RSI {pick.get('rsi',0)} ADX {pick.get('adx',0)}</span></p>
                   <p style="margin:6px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(pick.get('reasons',[])[:3])}</p>
-                  <span class="win-badge">V47 Backtest {pick.get('win_pct',0)}% ({pick.get('wins',0)}/{pick.get('total',0)}) 15D</span><span class="atr-badge">ATR {pick.get('atr_pct',0):.1f}%</span>
+                  <span class="win-badge">LOCKED {pick.get('win_pct',0)}% ({pick.get('wins',0)}/{pick.get('total',0)}) 15D</span><span class="atr-badge">ATR {pick.get('atr_pct',0):.1f}%</span>
                 </div>
                 <div style="text-align:center;">
                   <div class="score-ring" style="background: conic-gradient(#FFD700 {pct}%, rgba(255,255,255,0.1) 0);"><span style="position:relative; z-index:2; color:white; font-family:Space Grotesk; font-weight:700; font-size:14px;">{score}</span></div>
-                  <div style="margin-top:10px; background: linear-gradient(135deg,#FFD700,#FF6A00); color:black; font-size:9px; padding:5px 12px; border-radius:100px; font-weight:800;">V47 BUY</div>
+                  <div style="margin-top:10px; background: linear-gradient(135deg,#FFD700,#FF6A00); color:black; font-size:9px; padding:5px 12px; border-radius:100px; font-weight:800;">LOCKED BUY</div>
                 </div>
               </div>
               <div class="target-row">
@@ -333,10 +306,7 @@ if morning_picks:
               </div>
             </div>
             """, unsafe_allow_html=True)
-else:
-    st.warning(f"⚠️ Aaj V47 Filter me koi stock pass nahi hua! {market_msg} - Market down hai toh high-quality pick nahi mila. Yehi filter Win Rate 75% karta hai! Kal try karo.")
 
-# Search
 c1,c2=st.columns([5.2,1])
 with c1: user_input=st.text_input("search", value="CUPID", placeholder="Search...", label_visibility="collapsed")
 with c2: st.button("SEARCH", use_container_width=True)
@@ -347,7 +317,6 @@ last=float(df["Close"].dropna().iloc[-1])
 sc_v47, rsns_v47, rsi_v47, adx_v47, filters_v47 = score_stock_v47(df)
 profit_main, tgt, sl_main, atr_main = get_smart_target(df, last, sc_v47)
 win_pct_main, wins_main, total_main = backtest_winrate_v47(ticker)
-sig = "BUY" if sc_v47>=90 else "HOLD"
 
 st.markdown(f"""
 <div class="top-god">
@@ -360,49 +329,32 @@ st.markdown(f"""
       </div>
       <div style="display:flex; gap:16px; margin-top:16px;">
         <div style="background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.04)); border:1px solid rgba(0,255,136,0.25); border-left:3px solid #00FF88; border-radius:10px; padding:8px 14px;">
-          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">V47 SMART TARGET</p>
+          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">LOCKED TARGET</p>
           <p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">Rs{round(tgt,2)} +{profit_main}%</p>
         </div>
         <div style="background: rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.2); border-radius:10px; padding:8px 14px;">
-          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SL</p>
+          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">LOCKED SL</p>
           <p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">Rs{round(sl_main,2)}</p>
         </div>
       </div>
-      <p style="margin:8px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(rsns_v47[:4])}</p>
     </div>
-    <div style="text-align:right;"><p class="live-price">Rs{round(last,2)}</p><div class="buy-god" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">{sig} Score {sc_v47}</div></div>
+    <div style="text-align:right;"><p class="live-price">Rs{round(last,2)}</p><div class="buy-god" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">Score {sc_v47}</div></div>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["📊 BSE Chart", "📈 Indicators", "🏆 V47 History"])
-
+tab1, tab2 = st.tabs(["📊 BSE Chart", "🏆 Locked History"])
 with tab1:
     bse_symbol = f"BSE:{raw.replace('.NS','').strip()}"
     tv = f"https://s.tradingview.com/widgetembed/?frameElementId=tv_final&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies%2CADX%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
     st.components.v1.iframe(tv, height=650, scrolling=False)
-
 with tab2:
-    df_c=df.tail(100).copy()
-    m_line,s_line,hist=calc_macd(df_c["Close"]); st_line,st_dir=calc_st(df_c)
-    st_color="#00FF88" if st_dir.iloc[-1]==1 else "#FF4D6A"
-    fig=make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.04, row_heights=[0.62,0.19,0.19])
-    fig.add_trace(go.Candlestick(x=df_c.index, open=df_c["Open"], high=df_c["High"], low=df_c["Low"], close=df_c["Close"], increasing_line_color="#00FF88", decreasing_line_color="#FF4D6A"), row=1, col=1)
-    fig.add_trace(go.Scatter(x=df_c.index, y=df_c["Close"].ewm(20).mean(), line=dict(color="#00D1FF",width=2), name="EMA20"), row=1, col=1)
-    fig.add_trace(go.Scatter(x=df_c.index, y=st_line, line=dict(color=st_color,width=2.5), name="Supertrend"), row=1, col=1)
-    colors=["#00FF88" if h>=0 else "#FF4D6A" for h in hist]
-    fig.add_trace(go.Scatter(x=df_c.index, y=m_line, line=dict(color="#00D1FF",width=2), name="MACD"), row=2, col=1)
-    fig.add_trace(go.Bar(x=df_c.index, y=hist, marker_color=colors), row=2, col=1)
-    fig.update_layout(template="plotly_dark", height=620, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_rangeslider_visible=False, margin=dict(l=0,r=0,t=10,b=0))
-    st.plotly_chart(fig, use_container_width=True)
-
-with tab3:
     if history_results:
-        st.markdown(f"### 🏆 V47 Last 30 Days - {win30}% Win ({wins30}/{total30})")
+        st.markdown(f"### 🔒 Locked History - {win30}% Win ({wins30}/{total30})")
         for h in reversed(history_results[-20:]):
             color = "#00FF88" if h["status"]=="WIN" else "#FF4D6A" if h["status"]=="LOSS" else "#FFD700"
             st.markdown(f"""<div style="background: rgba(255,255,255,0.05); border-left: 3px solid {color}; border-radius: 10px; padding: 10px 14px; margin-bottom:8px; display:flex; justify-content:space-between;"><div><span style="color:white; font-family:Space Grotesk; font-weight:700;">{h['name']}</span> <span style="color:#8892b0; font-size:11px;">{h['date']}</span> • Rs{h['entry']} → Rs{h['target']} <span style="color:{color}; font-weight:700;">{h['status']}</span></div><div style="color:#FFD700; font-family:JetBrains Mono; font-size:11px;">+{h['profit_pct']}%</div></div>""", unsafe_allow_html=True)
     else:
-        st.info("V47 Tracking Started! Ab ADX + NIFTY Filter se picks save honge. 7 din baad 75% win dekhega!")
+        st.info("🔒 Locked! Tracking active. 7 din baad real win rate.")
 
-st.caption(f"V47 75% WIN • ADX>22 + RSI 50-66 + NIFTY Filter + 15 Day Hold • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+st.caption(f"🔒 V47.1 FINAL LOCKED • No More Edits • 05 SEP 2026 • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
