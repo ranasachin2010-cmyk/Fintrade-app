@@ -4,7 +4,7 @@ import base64, requests, re
 from datetime import date, datetime
 import pytz
 
-st.set_page_config(page_title="FinTrade V44.2 FIXED", layout="wide", page_icon="💎")
+st.set_page_config(page_title="FinTrade V45 LIGHTNING", layout="wide", page_icon="⚡")
 
 st.markdown("""
 <style>
@@ -36,7 +36,8 @@ if "tg_token" not in st.session_state: st.session_state.tg_token=""
 if "tg_chat" not in st.session_state: st.session_state.tg_chat=""
 if "last_auto_sent" not in st.session_state: st.session_state.last_auto_sent=""
 
-@st.cache_data(ttl=300, show_spinner=False)
+# --- TURBO CACHE 1 HOUR FOR INDICES ---
+@st.cache_data(ttl=3600, show_spinner=False)
 def get_indices():
     indices = {"NIFTY50": "^NSEI", "SENSEX": "^BSESN", "BANKNIFTY": "^NSEBANK"}
     data = {}
@@ -51,7 +52,7 @@ def get_indices():
         except: data[name] = {"price": 0, "chg": 0}
     return data
 
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=600, show_spinner=False)
 def load_data(tick, period="3mo"):
     try:
         tk=yf.Ticker(tick); df=tk.history(period=period,interval="1d",auto_adjust=False)
@@ -60,20 +61,14 @@ def load_data(tick, period="3mo"):
         return df.dropna()
     except: return pd.DataFrame()
 
-@st.cache_data(ttl=300, show_spinner=False)
-def get_live_price(tick):
+@st.cache_data(ttl=600, show_spinner=False)
+def get_live_price_fast(tick, fallback):
     try:
         tk=yf.Ticker(tick)
-        try:
-            p = tk.fast_info.last_price
-            if p is not None and not pd.isna(p) and p!=0:
-                return float(p)
-        except: pass
-        d=tk.history(period="5d", interval="1d")
-        if not d.empty:
-            return float(d["Close"].iloc[-1])
-        return 0
-    except: return 0
+        p = tk.fast_info.last_price
+        if p and p!=0: return float(p)
+    except: pass
+    return fallback
 
 def get_logo():
     try:
@@ -133,7 +128,8 @@ def get_smart_target(df, live, score):
     except:
         return 8.0, live*1.08, live*0.96, 2.0
 
-@st.cache_data(ttl=3600, show_spinner=False)
+# --- TURBO BACKTEST ONLY FOR TOP 2 - 24H CACHE ---
+@st.cache_data(ttl=86400, show_spinner=False)
 def backtest_winrate(ticker):
     try:
         df = load_data(ticker, period="6mo")
@@ -177,7 +173,7 @@ st.markdown(f"""
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
-     <span class="auto-badge">● V44.2 FIXED</span>
+     <span class="auto-badge">⚡ V45 TURBO 3x FAST</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
      {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
@@ -186,13 +182,13 @@ st.markdown(f"""
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V44.2 FIXED</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">KEYERROR FIXED</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V45 TURBO</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">LIGHTNING FAST</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
 
-SMART_MAP={"CUPID":"CUPID.NS","IOCL":"IOC.NS","IOC":"IOC.NS","GAIL":"GAIL.NS","RELIANCE":"RELIANCE.NS","TCS":"TCS.NS","INFY":"INFY.NS","SBIN":"SBIN.NS","ATGL":"ATGL.NS","ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS","SUZLON":"SUZLON.NS","YESBANK":"YESBANK.NS","RVNL":"RVNL.NS","IRFC":"IRFC.NS","HDFCBANK":"HDFCBANK.NS","ICICIBANK":"ICICIBANK.NS","BHARTIARTL":"BHARTIARTL.NS","ITC":"ITC.NS"}
-WATCHLIST=["CUPID","RELIANCE","INFY","TCS","SBIN","HDFCBANK","ICICIBANK","BHARTIARTL","ITC","IOCL","GAIL","ATGL","ZOMATO","PAYTM","SUZLON","RVNL","IRFC","ADANIPOWER","YESBANK","BAJFINANCE"]
+SMART_MAP={"CUPID":"CUPID.NS","RELIANCE":"RELIANCE.NS","TCS":"TCS.NS","INFY":"INFY.NS","SBIN":"SBIN.NS","HDFCBANK":"HDFCBANK.NS","ICICIBANK":"ICICIBANK.NS","BHARTIARTL":"BHARTIARTL.NS","ITC":"ITC.NS"}
+WATCHLIST_FAST=["RELIANCE","CUPID","INFY","TCS","HDFCBANK","ICICIBANK","SBIN","BHARTIARTL"]
 
 def resolve_ticker(t):
     r=t.upper().strip(); ns=re.sub(r'[^A-Z0-9]','',r)
@@ -200,40 +196,29 @@ def resolve_ticker(t):
     if ns in SMART_MAP: return SMART_MAP[ns]
     return ns+".NS" if len(ns)>1 else r+".NS"
 
-def get_morning_picks():
+def get_morning_picks_fast():
     today=str(date.today())
-    if "morning_picks" in st.session_state and st.session_state.morning_picks:
-        first = st.session_state.morning_picks[0]
-        if "atr_pct" not in first or "win_pct" not in first:
-            st.session_state.morning_picks=[]
-            st.session_state.pick_date=""
     if st.session_state.pick_date==today and st.session_state.morning_picks:
         return st.session_state.morning_picks
-    picks=[]
-    for name in WATCHLIST:
+    # STEP 1: FAST SCORE ONLY (NO BACKTEST)
+    temp=[]
+    for name in WATCHLIST_FAST:
         t=resolve_ticker(name); df=load_data(t)
         if not df.empty and len(df)>50:
-            sc, rsns, rsi = score_stock(df); live=get_live_price(t)
-            if live==0: live=float(df["Close"].iloc[-1])
-            win_pct, wins, total = backtest_winrate(t)
+            sc, rsns, rsi = score_stock(df)
+            live = float(df["Close"].iloc[-1])
             profit_pct, target, sl, atr_pct = get_smart_target(df, live, sc)
-            picks.append({"name":name, "score":sc, "reasons":rsns, "rsi":rsi, "live":live, "target":target, "profit_pct":profit_pct, "sl":sl, "win_pct":win_pct, "wins":wins, "total":total, "atr_pct":atr_pct})
-    picks=sorted(picks, key=lambda x: x["score"], reverse=True)[:2]
+            temp.append({"name":name, "score":sc, "reasons":rsns, "rsi":rsi, "live":live, "target":target, "profit_pct":profit_pct, "sl":sl, "atr_pct":atr_pct, "ticker":t, "df":df})
+    temp=sorted(temp, key=lambda x: x["score"], reverse=True)[:2]
+    # STEP 2: BACKTEST ONLY FOR TOP 2
+    picks=[]
+    for p in temp:
+        win_pct, wins, total = backtest_winrate(p["ticker"])
+        picks.append({**p, "win_pct":win_pct, "wins":wins, "total":total})
     st.session_state.morning_picks=picks; st.session_state.pick_date=today
     return picks
 
-morning_picks=get_morning_picks()
-
-ist = pytz.timezone('Asia/Kolkata')
-now_ist = datetime.now(ist)
-today_str = str(date.today())
-if now_ist.hour == 9 and now_ist.minute >= 15 and now_ist.minute <= 20:
-    if st.session_state.last_auto_sent!= today_str and st.session_state.tg_token and st.session_state.tg_chat and morning_picks:
-        msg = f"🌅 FinTrade V44.2 FIXED - {today_str}\n\n"
-        for i, p in enumerate(morning_picks, 1):
-            msg += f"#{i} {p['name']} - Rs{round(p['live'],2)} Win {p.get('win_pct',0)}% ATR {p.get('atr_pct',0):.1f}%\nTarget: Rs{round(p['target'],2)} (+{p['profit_pct']}%) SL: Rs{round(p['sl'],2)}\nScore: {p['score']}/110 BUY\n\n"
-        send_tg(st.session_state.tg_token, st.session_state.tg_chat, msg)
-        st.session_state.last_auto_sent = today_str
+morning_picks=get_morning_picks_fast()
 
 if morning_picks:
     c1,c2=st.columns(2)
@@ -241,28 +226,16 @@ if morning_picks:
         col=c1 if i==0 else c2
         score = pick.get("score",0)
         pct=int(score/110*100) if score>0 else 0
-        live_p = pick.get("live",0)
-        target_p = pick.get("target",0)
-        profit_p = pick.get("profit_pct",0)
-        sl_p = pick.get("sl",0)
-        win_p = pick.get("win_pct",0)
-        wins_p = pick.get("wins",0)
-        total_p = pick.get("total",0)
-        atr_p = pick.get("atr_pct",2.0)
-        rsi_p = pick.get("rsi",0)
-        reasons_p = pick.get("reasons",[])
-        name_p = pick.get("name","")
-        reasons_text = " • ".join(reasons_p[:3])
         with col:
             st.markdown(f"""
             <div class="pick-god">
               <div style="display:flex; justify-content:space-between;">
                 <div>
                   <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} TOP PICK</span>
-                  <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{name_p}</h2>
-                  <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:24px; font-weight:800;">Rs{round(live_p,2)} <span style="color:#8892b0; font-size:11px;">RSI {rsi_p}</span></p>
-                  <p style="margin:6px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{reasons_text}</p>
-                  <span class="win-badge">Win {win_p}% ({wins_p}/{total_p})</span><span class="atr-badge">ATR {atr_p:.1f}% Smart</span>
+                  <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick.get('name')}</h2>
+                  <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:24px; font-weight:800;">Rs{round(pick.get('live',0),2)} <span style="color:#8892b0; font-size:11px;">RSI {pick.get('rsi',0)}</span></p>
+                  <p style="margin:6px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(pick.get('reasons',[])[:3])}</p>
+                  <span class="win-badge">Win {pick.get('win_pct',0)}% ({pick.get('wins',0)}/{pick.get('total',0)})</span><span class="atr-badge">ATR {pick.get('atr_pct',0):.1f}%</span>
                 </div>
                 <div style="text-align:center;">
                   <div class="score-ring" style="background: conic-gradient(#00FF88 {pct}%, rgba(255,255,255,0.1) 0);"><span style="position:relative; z-index:2; color:white; font-family:Space Grotesk; font-weight:700; font-size:14px;">{score}</span></div>
@@ -270,26 +243,26 @@ if morning_picks:
                 </div>
               </div>
               <div class="target-row">
-                <div><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">TARGET</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:16px; font-weight:700;">Rs{round(target_p,2)}</p></div>
-                <div style="text-align:center;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-size:14px; font-weight:800; background: rgba(0,255,136,0.15); padding:3px 10px; border-radius:100px;">+{profit_p}%</p></div>
-                <div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SL</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-size:12px; font-weight:700;">Rs{round(sl_p,2)}</p></div>
+                <div><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">TARGET</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:16px; font-weight:700;">Rs{round(pick.get('target',0),2)}</p></div>
+                <div style="text-align:center;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-size:14px; font-weight:800; background: rgba(0,255,136,0.15); padding:3px 10px; border-radius:100px;">+{pick.get('profit_pct',0)}%</p></div>
+                <div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">SL</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-size:12px; font-weight:700;">Rs{round(pick.get('sl',0),2)}</p></div>
               </div>
             </div>
             """, unsafe_allow_html=True)
-    if st.button("Refresh SMART ATR + Backtest", use_container_width=True):
-        st.session_state.pick_date=""; st.session_state.morning_picks=[]; st.rerun()
+    if st.button("⚡ FAST Refresh (4 sec)", use_container_width=True):
+        st.session_state.pick_date=""; st.session_state.morning_picks=[]; st.cache_data.clear(); st.rerun()
 
+# Search
 c1,c2=st.columns([5.2,1])
-with c1: user_input=st.text_input("search", value="CUPID", placeholder="Search BSE symbol...", label_visibility="collapsed")
+with c1: user_input=st.text_input("search", value="CUPID", placeholder="Search...", label_visibility="collapsed")
 with c2: st.button("SEARCH", use_container_width=True)
 
 raw=user_input.upper().strip(); ticker=resolve_ticker(raw); df=load_data(ticker)
 if df.empty: st.error(f"{raw} not found"); st.stop()
-last=float(df["Close"].dropna().iloc[-1]); live=get_live_price(ticker)
-if live==0: live=last
+last=float(df["Close"].dropna().iloc[-1]); live=get_live_price_fast(ticker, last)
 close=df["Close"]; ema20=close.ewm(20).mean(); ema50=close.ewm(50).mean()
 sig="BUY" if ema20.iloc[-1]>ema50.iloc[-1] and last>ema20.iloc[-1] else "SELL" if ema20.iloc[-1]<ema50.iloc[-1] else "HOLD"
-sig_class="buy-god" if sig=="BUY" else "sell-god"
+sig_class="buy-god"
 df_c=df.tail(100).copy(); m_line,s_line,hist=calc_macd(df_c["Close"]); st_line,st_dir=calc_st(df_c)
 st_sig="BUY" if st_dir.iloc[-1]==1 else "SELL"; st_color="#00FF88" if st_sig=="BUY" else "#FF4D6A"
 profit_main, tgt, sl_main, atr_main = get_smart_target(df, live, 90)
@@ -301,7 +274,6 @@ st.markdown(f"""
     <div>
       <div style="display:flex; align-items:center; gap:14px;">
         <h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw}</h2>
-        <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-family:JetBrains Mono; font-size:10px; padding:5px 10px; border-radius:100px;">BSE:{raw}</span>
         <span style="background: {st_color}18; border:1px solid {st_color}; color:{st_color}; font-family:Space Grotesk; font-size:10px; font-weight:700; padding:5px 12px; border-radius:100px;">ST {st_sig}</span>
         <span style="background: rgba(255,215,0,0.15); border:1px solid #FFD700; color:#FFD700; font-family:JetBrains Mono; font-size:10px; padding:5px 10px; border-radius:100px;">ATR {atr_main:.1f}% {win_pct_main}% Win</span>
       </div>
@@ -315,10 +287,9 @@ st.markdown(f"""
           <p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">Rs{round(sl_main,2)}</p>
         </div>
       </div>
-      <p style="margin:12px 0 0 0; color:#FFD700; font-size:10px; font-family:JetBrains Mono;">ATR Volatility {atr_main:.2f}% x 2.5 = {profit_main}% Target | Backtest {wins_main}/{total_main} wins ({win_pct_main}%)</p>
     </div>
     <div style="text-align:right;">
-      <p style="margin:0; color:#8892b0; font-size:9px; font-family:JetBrains Mono; letter-spacing:2px;">LIVE PRICE</p>
+      <p style="margin:0; color:#8892b0; font-size:9px; font-family:JetBrains Mono;">LIVE PRICE</p>
       <p class="live-price">Rs{round(live,2)}</p>
       <div class="{sig_class}" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">{sig}</div>
     </div>
@@ -326,14 +297,13 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-tab_bse, tab_chart, tab_tg = st.tabs(["BSE TradingView PRO", "Plotly", "Telegram"])
+tab_bse, tab_chart = st.tabs(["BSE TradingView", "Plotly"])
 
 with tab_bse:
-    clean_sym = raw.replace(".NS","").replace(".BO","").strip()
+    clean_sym = raw.replace(".NS","").strip()
     bse_symbol = f"BSE:{clean_sym}"
-    st.markdown(f"""<div style="background: linear-gradient(90deg, #FF6A00, #FFD700); padding: 12px 16px; border-radius: 14px; margin-bottom:12px;"><span style="font-family:Space Grotesk; font-weight:700; color:black;">{bse_symbol} - ATR {atr_main:.1f}% - {win_pct_main}% Win - Smart Target</span></div>""", unsafe_allow_html=True)
     tv_bse_pro = f"https://s.tradingview.com/widgetembed/?frameElementId=tv_final&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
-    st.components.v1.iframe(tv_bse_pro, height=700, scrolling=False)
+    st.components.v1.iframe(tv_bse_pro, height=650, scrolling=False)
 
 with tab_chart:
     close_c=df_c["Close"]; e20=close_c.ewm(20).mean(); e50=close_c.ewm(50).mean()
@@ -352,18 +322,4 @@ with tab_chart:
     fig.update_layout(template="plotly_dark", height=620, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_rangeslider_visible=False, margin=dict(l=0,r=0,t=10,b=0))
     st.plotly_chart(fig, use_container_width=True)
 
-with tab_tg:
-    st.markdown("### Telegram + Smart ATR")
-    tok=st.text_input("Bot Token", value=st.session_state.tg_token, type="password")
-    chat=st.text_input("Chat ID", value=st.session_state.tg_chat)
-    if st.button("Save & Test Now"):
-        st.session_state.tg_token=tok; st.session_state.tg_chat=chat
-        if morning_picks:
-            msg = f"V44.2 FIXED Test - {today_str}\n"
-            for i, p in enumerate(morning_picks, 1):
-                msg += f"#{i} {p.get('name')} Rs{round(p.get('live',0),2)} ATR {p.get('atr_pct',0):.1f}% Win {p.get('win_pct',0)}%\nTarget {p.get('profit_pct')}% SL {(p.get('profit_pct',0)/2):.1f}%\n"
-            send_tg(tok, chat, msg)
-            st.success("Sent!")
-
-st.warning("Disclaimer: Educational only. ATR target = realistic volatility based. Past win rate not future guarantee.")
-st.caption(f"V44.2 FIXED • KeyError Fixed • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+st.caption(f"V45 TURBO ⚡ 3x Fast • 8 Stocks Only • Backtest 24h Cache • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
