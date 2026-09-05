@@ -1,149 +1,252 @@
 import streamlit as st, yfinance as yf, pandas as pd, plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import base64
-from datetime import datetime
+import base64, requests, re
+from datetime import date, datetime, time
 import pytz
 
-st.set_page_config(page_title="FinTrade God V45.2 - No Portfolio", layout="wide", page_icon="💎")
+st.set_page_config(page_title="FinTrade God V43", layout="wide", page_icon="💎")
 
-@st.cache_data(ttl=300, show_spinner=False)
-def safe_yf(symbol, period="1mo", interval="1d"):
-    try:
-        return yf.Ticker(symbol).history(period=period, interval=interval)
-    except:
-        return pd.DataFrame()
-
-@st.cache_data(ttl=300, show_spinner=False)
-def get_index_price(sym):
-    try:
-        h = yf.Ticker(sym).history(period="2d", interval="1d")
-        if h.empty: return None, None
-        last = h['Close'].iloc[-1]
-        prev = h['Close'].iloc[-2] if len(h)>1 else last
-        pct = ((last-prev)/prev)*100
-        return last, pct
-    except:
-        return None, None
-
-def get_logo():
-    try:
-        with open("logo.png","rb") as f:
-            data = base64.b64encode(f.read()).decode()
-            return f'<img src="data:image/png;base64,{data}" width="88" height="88" style="border-radius:18px; border:none; background:transparent; margin-right:14px; display:block;">'
-    except:
-        return '<div style="font-size:42px; margin-right:14px;">💎</div>'
+# AUTO REFRESH EVERY 5 MIN - 300 seconds
+st.markdown('<meta http-equiv="refresh" content="300">', unsafe_allow_html=True)
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
-.stApp{background:#020208; background-image: radial-gradient(at 0% 0%, hsla(212,100%,56%,0.25) 0px, transparent 50%), radial-gradient(at 20% 10%, hsla(273,100%,60%,0.25) 0px, transparent 50%), radial-gradient(at 90% 0%, hsla(158,100%,50%,0.20) 0px, transparent 50%);}
-.header-god{background: linear-gradient(135deg, #6A5AE0 0%, #7B6EF0 100%)!important; border:none!important; border-radius:24px; padding:16px 22px; box-shadow:0 10px 40px rgba(106,90,224,0.35); display:flex; align-items:center;}
-.header-god img{background:transparent!important; border:none!important;}
-.pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); border:1.5px solid transparent; border-radius:24px; padding:20px; margin-bottom:16px;}
-.pick-god{border-image: linear-gradient(135deg, #00FF88, #00D1FF, #7000FF) 1;}
-.pick-god::before{display:none!important;}
-.top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); border:1px solid rgba(255,255,255,0.12); border-radius:28px; padding:24px 26px;}
-.target-row{display:flex; justify-content:space-between; margin-top:14px; padding:10px 12px; background: rgba(0,255,136,0.12); border-left:3px solid #00FF88; border-radius:12px; font-family:JetBrains Mono; font-size:12px; color:#00FF88;}
-.index-chip{display:inline-flex; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px;}
-.index-up{color:#00FF88; font-weight:800;}.index-down{color:#FF4D6A;}
-.bse-badge{background: linear-gradient(135deg, #FF6A00, #FFD700); color:black; font-weight:700; font-size:10px; padding:4px 10px; border-radius:100px;}
-.auto-badge{background: rgba(0,255,136,0.15); border:1px solid rgba(0,255,136,0.3); color:#00FF88; font-size:10px; padding:5px 12px; border-radius:100px; font-weight:700;}
-.stTextInput>div>div>input{background: rgba(255,255,255,0.06)!important; border:1.5px solid rgba(255,255,255,0.12)!important; border-radius:20px!important; color:white!important; font-family:JetBrains Mono!important; font-weight:800!important; font-size:18px!important; height:64px!important;}
-.stButton>button{background: linear-gradient(135deg, #00D1FF 0%, #7000FF 50%, #00FF88 100%)!important; border:none!important; border-radius:18px!important; color:white!important; font-weight:700!important; height:64px!important;}
+.stApp{background: #020208; background-image: radial-gradient(at 0% 0%, hsla(212,100%,56%,0.25) 0px, transparent 50%), radial-gradient(at 20% 10%, hsla(273,100%,60%,0.25) 0px, transparent 50%), radial-gradient(at 90% 0%, hsla(158,100%,50%,0.20) 0px, transparent 50%);}
+.header-god{background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 100%); backdrop-filter: blur(40px) saturate(180%); border: 1px solid rgba(255,255,255,0.1); border-radius: 28px; padding: 18px 26px; box-shadow: 0 20px 80px rgba(0,0,0,0.6);}
+.pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border-radius: 24px; padding: 20px 20px 14px 20px; position: relative; box-shadow: 0 12px 40px rgba(0,255,136,0.12), inset 0 1px 0 rgba(255,255,255,0.1);}
+.pick-god::before{content:''; position: absolute; inset: 0; border-radius: 24px; padding: 1.5px; background: linear-gradient(135deg, #00FF88, #00D1FF, #7000FF); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;}
+.top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px 26px;}
+.live-price{font-family: 'Space Grotesk'; font-weight: 700; font-size: 38px; background: linear-gradient(90deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+.buy-god{background: linear-gradient(135deg, #00FF88 0%, #00E5FF 100%)!important; color: #001a0a!important; font-weight: 700!important; font-size: 15px!important; padding: 14px 28px!important; border-radius: 14px!important; border: none!important;}
+.stTextInput>div>div>input{background: rgba(255,255,255,0.06)!important; border: 1.5px solid rgba(255,255,255,0.12)!important; border-radius: 20px!important; color: white!important; font-family: JetBrains Mono!important; font-weight: 800!important; font-size: 18px!important; height: 64px!important;}
+.stButton>button{background: linear-gradient(135deg, #00D1FF 0%, #7000FF 50%, #00FF88 100%)!important; border: none!important; border-radius: 18px!important; color: white!important; font-weight: 700!important; height: 64px!important;}
+.score-ring{width: 56px; height: 56px; border-radius: 50%; background: conic-gradient(#00FF88 var(--p), rgba(255,255,255,0.1) 0); display: flex; align-items: center; justify-content: center; position: relative;}
+.score-ring::before{content:''; position: absolute; inset: 4px; background: #0a1220; border-radius: 50%;}
+.target-row{display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 10px 12px; background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.06)); border: 1px solid rgba(0,255,136,0.25); border-left: 3px solid #00FF88; border-radius: 12px;}
+.index-chip{display:inline-flex; align-items:center; gap:6px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px;}
+.index-up{color:#00FF88; font-weight:800;}.index-down{color:#FF4D6A; font-weight:800;}
+.bse-badge{background: linear-gradient(135deg, #FF6A00, #FFD700); color:black; font-family:Space Grotesk; font-weight:700; font-size:10px; padding:4px 10px; border-radius:100px;}
+.auto-badge{background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:8px; padding:3px 8px; border-radius:100px; font-family:JetBrains Mono; animation: blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
 </style>
 """, unsafe_allow_html=True)
 
-nifty_p, nifty_c = get_index_price("^NSEI")
-sensex_p, sensex_c = get_index_price("^BSESN")
-bank_p, bank_c = get_index_price("^NSEBANK")
-def chip(n,p,c):
-    if p is None: return f'<span class="index-chip">{n}: Loading</span>'
-    cls="index-up" if c>=0 else "index-down"; arrow="▲" if c>=0 else "▼"
-    return f'<span class="index-chip">{n}: ₹{p:,.0f} <span class="{cls}">{arrow} {abs(c):.2f}%</span></span>'
+if "morning_picks" not in st.session_state: st.session_state.morning_picks=[]
+if "pick_date" not in st.session_state: st.session_state.pick_date=""
+if "tg_token" not in st.session_state: st.session_state.tg_token=""
+if "tg_chat" not in st.session_state: st.session_state.tg_chat=""
+if "last_auto_sent" not in st.session_state: st.session_state.last_auto_sent=""
 
-chips = chip("NIFTY",nifty_p,nifty_c if nifty_c else 0)+chip("SENSEX",sensex_p,sensex_c if sensex_c else 0)+chip("BANKNIFTY",bank_p,bank_c if bank_c else 0)
+def get_logo():
+    try:
+        with open("logo.png","rb") as f: return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="58" style="border-radius:16px;">'
+    except: return '<div style="font-size:38px;">💎</div>'
+
+def send_tg(token, chat, msg):
+    try: requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id":chat,"text":msg,"parse_mode":"Markdown"}, timeout=10)
+    except: pass
+
+def get_indices():
+    indices = {"NIFTY50": "^NSEI", "SENSEX": "^BSESN", "BANKNIFTY": "^NSEBANK"}
+    data = {}
+    for name, sym in indices.items():
+        try:
+            tk = yf.Ticker(sym); hist = tk.history(period="2d", interval="1d")
+            if not hist.empty:
+                last = float(hist["Close"].iloc[-1]); prev = float(hist["Close"].iloc[-2]) if len(hist)>1 else last
+                chg = ((last-prev)/prev*100) if prev!=0 else 0
+                data[name] = {"price": last, "chg": chg}
+            else: data[name] = {"price": 0, "chg": 0}
+        except: data[name] = {"price": 0, "chg": 0}
+    return data
+
+indices_data = get_indices()
+def fmt_chip(name, price, chg):
+    arrow = "▲" if chg>=0 else "▼"; col = "index-up" if chg>=0 else "index-down"
+    return f'<span class="index-chip">● {name} {int(price):,} <span class="{col}">{arrow} {abs(chg):.2f}%</span></span>'
 
 st.markdown(f"""
 <div class="header-god">
- {get_logo()}
- <div><div style="font-family:Space Grotesk; font-weight:800; font-size:28px; color:white;">FinTrade <span style="color:#00FFCC;">God</span> V45.2 <span class="bse-badge">BSE</span></div>
- <div style="margin-top:8px; display:flex; flex-wrap:wrap;">{chips}</div></div>
- <div style="margin-left:auto;"><span class="auto-badge">● LIVE • NO PORTFOLIO • CLEAN</span></div>
+ <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div style="display:flex; align-items:center; gap:18px;">
+   <div>{get_logo()}</div>
+   <div>
+    <div style="display:flex; align-items:center; gap:10px;">
+     <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
+     <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
+     <span class="bse-badge">BSE MODE</span>
+     <span class="auto-badge">● AUTO 5M REFRESH</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
+     {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
+     {fmt_chip("SENSEX", indices_data.get("SENSEX", {}).get("price", 0), indices_data.get("SENSEX", {}).get("chg", 0))}
+     {fmt_chip("BANKNIFTY", indices_data.get("BANKNIFTY", {}).get("price", 0), indices_data.get("BANKNIFTY", {}).get("chg", 0))}
+    </div>
+   </div>
+  </div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V43 ULTIMATE</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">AUTO + TG 9:15 + BSE INDICATORS</p></div>
+ </div>
 </div>
 """, unsafe_allow_html=True)
 
-st.write("")
+SMART_MAP={"CUPID":"CUPID.NS","IOCL":"IOC.NS","IOC":"IOC.NS","GAIL":"GAIL.NS","RELIANCE":"RELIANCE.NS","TCS":"TCS.NS","INFY":"INFY.NS","SBIN":"SBIN.NS","ATGL":"ATGL.NS","ZOMATO":"ETERNAL.NS","PAYTM":"PAYTM.NS","SUZLON":"SUZLON.NS","YESBANK":"YESBANK.NS","RVNL":"RVNL.NS","IRFC":"IRFC.NS","HDFCBANK":"HDFCBANK.NS","ICICIBANK":"ICICIBANK.NS","BHARTIARTL":"BHARTIARTL.NS","ITC":"ITC.NS"}
+WATCHLIST=["CUPID","RELIANCE","INFY","TCS","SBIN","HDFCBANK","ICICIBANK","BHARTIARTL","ITC","IOCL","GAIL","ATGL","ZOMATO","PAYTM","SUZLON","RVNL","IRFC","ADANIPOWER","YESBANK","BAJFINANCE"]
 
-st.markdown("""
-<div class="top-god">
-  <div style="font-family:Space Grotesk; font-weight:700; color:white; font-size:20px;">🔥 TOP PICKS - GOD MODE</div>
-  <div style="font-family:JetBrains Mono; font-size:11px; color:rgba(255,255,255,0.6);">AI Score > 85 • 6 Stocks • SEBI Safe</div>
-</div>
-""", unsafe_allow_html=True)
-st.write("")
+def resolve_ticker(t):
+    r=t.upper().strip(); ns=re.sub(r'[^A-Z0-9]','',r)
+    if r in SMART_MAP: return SMART_MAP[r]
+    if ns in SMART_MAP: return SMART_MAP[ns]
+    return ns+".NS" if len(ns)>1 else r+".NS"
+def load_data(tick):
+    try:
+        tk=yf.Ticker(tick); df=tk.history(period="3mo",interval="1d",auto_adjust=False)
+        if df.empty: df=tk.history(period="1mo",interval="1d",auto_adjust=True)
+        if isinstance(df.columns,pd.MultiIndex): df.columns=df.columns.get_level_values(0)
+        return df.dropna()
+    except: return pd.DataFrame()
+def get_live_price(tick):
+    try:
+        tk=yf.Ticker(tick); p=tk.fast_info.last_price
+        if p is None or pd.isna(p):
+            d=tk.history(period="1d",interval="1m"); p=float(d["Close"].dropna().iloc[-1]) if not d.empty else 0
+        return float(p)
+    except: return 0
+def calc_st(df, period=10, mult=3):
+    hl2=(df['High']+df['Low'])/2; tr1=df['High']-df['Low']; tr2=(df['High']-df['Close'].shift()).abs(); tr3=(df['Low']-df['Close'].shift()).abs()
+    tr=pd.concat([tr1,tr2,tr3],axis=1).max(axis=1); atr=tr.rolling(period).mean(); upper=hl2+mult*atr; lower=hl2-mult*atr
+    st_line=[0]*len(df); direction=[1]*len(df)
+    for i in range(1,len(df)):
+        if df['Close'].iloc[i]<=lower.iloc[i-1]: direction[i]=-1
+        elif df['Close'].iloc[i]>=upper.iloc[i-1]: direction[i]=1
+        else: direction[i]=direction[i-1]
+        st_line[i]=lower.iloc[i] if direction[i]==1 else upper.iloc[i]
+    return pd.Series(st_line,index=df.index), pd.Series(direction,index=df.index)
+def calc_macd(c, fast=12, slow=26, sig=9):
+    ef=c.ewm(span=fast).mean(); es=c.ewm(span=slow).mean(); m=ef-es; s=m.ewm(span=sig).mean(); h=m-s; return m,s,h
+def score_stock(df):
+    try:
+        c=df["Close"]; e20=c.ewm(20).mean(); e50=c.ewm(50).mean(); e200=c.ewm(200).mean()
+        m_line,s_line,hist=calc_macd(c.tail(100)); _, st_dir=calc_st(df.tail(100))
+        delta=c.diff(); gain=(delta.where(delta>0,0)).rolling(14).mean(); loss=(-delta.where(delta<0,0)).rolling(14).mean()
+        rs=gain/loss.replace(0,0.001); rsi=100-(100/(1+rs))
+        last=c.iloc[-1]; vol=df["Volume"].iloc[-1]; vol_avg=df["Volume"].tail(20).mean()
+        score=0; reasons=[]
+        if e20.iloc[-1]>e50.iloc[-1]: score+=20; reasons.append("EMA Uptrend")
+        if e50.iloc[-1]>e200.iloc[-1]: score+=15; reasons.append("Long Bull")
+        if last>e20.iloc[-1]: score+=15; reasons.append("Price>EMA20")
+        if st_dir.iloc[-1]==1: score+=20; reasons.append("Supertrend BUY")
+        if m_line.iloc[-1]>s_line.iloc[-1]: score+=10; reasons.append("MACD Bull")
+        if hist.iloc[-1]>hist.iloc[-2]: score+=10; reasons.append("Momentum Up")
+        r=rsi.iloc[-1]
+        if 45<=r<=70: score+=10; reasons.append(f"RSI {round(r,1)}")
+        if vol>vol_avg*1.2: score+=10; reasons.append("Vol Breakout")
+        return score, reasons, round(rsi.iloc[-1],1)
+    except: return 0, [], 50
 
-stocks = ["RELIANCE.NS", "TCS.NS", "INFY.NS", "CUPID.NS", "HDFCBANK.NS", "ICICIBANK.NS"]
-cols = st.columns(3)
-for i, sym in enumerate(stocks):
-    hist = safe_yf(sym, period="5d", interval="1d")
-    if hist.empty: continue
-    last = float(hist['Close'].iloc[-1])
-    prev = float(hist['Close'].iloc[-2]) if len(hist)>1 else last
-    pct = ((last-prev)/prev)*100 if prev!=0 else 0
-    score = 88 if pct>0 else 72
-    target = last*1.08
-    sl = last*0.95
-    vol = hist['Volume'].iloc[-1] if 'Volume' in hist else 0
-    color="#00FF88" if pct>=0 else "#FF4D6A"; arrow="▲" if pct>=0 else "▼"
-    with cols[i%3]:
-        st.markdown(f"""
-        <div class="pick-god">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="font-family:Space Grotesk; font-weight:800; font-size:22px; color:white;">{sym.replace('.NS','')}</div>
-            <div style="width:56px; height:56px; border-radius:50%; background: conic-gradient(#00FF88 {score}%, rgba(255,255,255,0.1) 0); display:flex; align-items:center; justify-content:center; position:relative;">
-              <div style="position:absolute; inset:4px; background:#0a1220; border-radius:50%;"></div>
-              <span style="position:relative; z-index:1; font-family:JetBrains Mono; font-weight:800; color:#00FF88; font-size:14px;">{score}</span>
-            </div>
-          </div>
-          <div style="font-family:Space Grotesk; font-weight:700; font-size:36px; color:white; margin-top:6px;">₹{last:,.0f} <span style="font-size:14px; color:{color};">{arrow} {abs(pct):.2f}%</span></div>
-          <div style="font-family:JetBrains Mono; font-size:10px; color:rgba(255,255,255,0.5);">VOL: {vol:,.0f} • RSI: {score} • BSE LIVE</div>
-          <div class="target-row"><span>🎯 TARGET: ₹{target:,.0f} (+8%)</span><span>SCORE {score}/100</span></div>
-          <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">
-            <span style="background:rgba(255,77,106,0.12); border:1px solid rgba(255,77,106,0.25); border-radius:100px; padding:6px 12px; font-size:10px; color:#FF4D6A;">🛑 STOP: ₹{sl:,.0f}</span>
-            <span style="background:rgba(0,209,255,0.12); border-radius:100px; padding:6px 12px; font-size:10px; color:#00D1FF;">📦 QTY: 10</span>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+def get_morning_picks():
+    today=str(date.today())
+    if st.session_state.pick_date==today and st.session_state.morning_picks: return st.session_state.morning_picks
+    picks=[]
+    for name in WATCHLIST:
+        t=resolve_ticker(name); df=load_data(t)
+        if not df.empty and len(df)>50:
+            sc, rsns, rsi = score_stock(df); live=get_live_price(t)
+            if live==0: live=float(df["Close"].iloc[-1])
+            profit_pct = 12 if sc>=100 else 8 if sc>=90 else 6
+            target = live * (1 + profit_pct/100); sl = live * 0.96
+            picks.append({"name":name, "score":sc, "reasons":rsns, "rsi":rsi, "live":live, "target":target, "profit_pct":profit_pct, "sl":sl})
+    picks=sorted(picks, key=lambda x: x["score"], reverse=True)[:2]
+    st.session_state.morning_picks=picks; st.session_state.pick_date=today
+    return picks
 
-st.divider()
+morning_picks=get_morning_picks()
 
-# --- FULL WIDTH CHART (PORTFOLIO HATAYA) ---
-st.markdown("""
-<div class="top-god" style="padding:18px 22px;">
-  <div style="font-family:Space Grotesk; font-weight:700; color:white; font-size:18px;">📈 LIVE CHART - GOD MODE ANALYSIS - FULL WIDTH</div>
-  <div style="font-family:JetBrains Mono; font-size:10px; color:rgba(255,255,255,0.5);">Candlestick • Volume • Bigger Chart</div>
-</div>
-""", unsafe_allow_html=True)
-st.write("")
-c1, c2 = st.columns([3, 1])
-with c1:
-    sym_input = st.text_input("STOCK SYMBOL", "RELIANCE.NS")
-with c2:
-    st.write(""); st.write("")
-    analyze = st.button("🚀 ANALYZE GOD MODE", use_container_width=True)
+# TELEGRAM AUTO 9:15 AM IST
+ist = pytz.timezone('Asia/Kolkata')
+now_ist = datetime.now(ist)
+today_str = str(date.today())
+if now_ist.hour == 9 and now_ist.minute >= 15 and now_ist.minute <= 20:
+    if st.session_state.last_auto_sent!= today_str and st.session_state.tg_token and st.session_state.tg_chat and morning_picks:
+        msg = f"🌅 *FinTrade God V43 - 9:15 AM Auto Picks - {today_str}*\n\n"
+        for i, p in enumerate(morning_picks, 1):
+            msg += f"#{i} *{p['name']}* - ₹{round(p['live'],2)} (RSI {p['rsi']})\nTarget: ₹{round(p['target'],2)} (+{p['profit_pct']}%) SL: ₹{round(p['sl'],2)}\nScore: {p['score']}/110 BUY ✅\n\n"
+        msg += f"NIFTY50: {int(indices_data.get('NIFTY50',{}).get('price',0)):,} | SENSEX: {int(indices_data.get('SENSEX',{}).get('price',0)):,}\n"
+        send_tg(st.session_state.tg_token, st.session_state.tg_chat, msg)
+        st.session_state.last_auto_sent = today_str
 
-if analyze:
-    with st.spinner(f"Fetching {sym_input}..."):
-        hist = safe_yf(sym_input, period="1mo", interval="1d")
-        if not hist.empty:
-            fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05, row_heights=[0.75, 0.25])
-            fig.add_trace(go.Candlestick(x=hist.index, open=hist['Open'], high=hist['High'], low=hist['Low'], close=hist['Close'], name="Price"), row=1, col=1)
-            fig.add_trace(go.Bar(x=hist.index, y=hist['Volume'], name="Volume", marker_color="#00D1FF"), row=2, col=1)
-            fig.update_layout(template="plotly_dark", height=600, margin=dict(l=10,r=10,t=10,b=10), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_rangeslider_visible=False)
-            st.plotly_chart(fig, use_container_width=True)
-            last = hist['Close'].iloc[-1]
-            st.success(f"✅ LIVE {sym_input}: ₹{last:.2f} | Target: ₹{last*1.08:.2f} | Stop: ₹{last*0.95:.2f}")
-        else:
-            st.error("⚠️ Yahoo API busy - 1 min baad try karo")
+if morning_picks:
+    c1,c2=st.columns(2)
+    for i, pick in enumerate(morning_picks):
+        col=c1 if i==0 else c2
+        pct=int(pick['score']/110*100)
+        with col:
+            st.markdown(f"""<div class="pick-god"><div style="display:flex; justify-content:space-between;"><div><span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} TOP PICK</span><h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick['name']}</h2><p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:24px; font-weight:800;">₹{round(pick['live'],2)} <span style="color:#8892b0; font-size:11px;">RSI {pick['rsi']}</span></p><p style="margin:10px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{' • '.join(pick['reasons'][:3])}</p></div><div style="text-align:center;"><div class="score-ring" style="--p:{pct}%;"><span style="position:relative; z-index:2; color:white; font-family:Space Grotesk; font-weight:700; font-size:14px;">{pick['score']}</span></div><div style="margin-top:10px; background: rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; font-size:9px; padding:5px 12px; border-radius:100px; font-weight:700;">BUY</div></div></div><div class="target-row"><div><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">TARGET</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:16px; font-weight:700;">₹{round(pick['target'],2)}</p></div><div style="text-align:center;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-size:14px; font-weight:800; background: rgba(0,255,136,0.15); padding:3px 10px; border-radius:100px;">▲ +{pick['profit_pct']}%</p></div><div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">STOP LOSS</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-size:12px; font-weight:700;">₹{round(pick['sl'],2)}</p></div></div></div>""", unsafe_allow_html=True)
+    if st.button("↻ Refresh God Picks", use_container_width=True):
+        st.session_state.pick_date=""; st.rerun()
 
-st.caption(f"V45.2 - Portfolio Removed • Clean UI • Full Width Chart • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+c1,c2=st.columns([5.2,1])
+with c1: user_input=st.text_input("search", value="CUPID", placeholder="Search BSE symbol...", label_visibility="collapsed")
+with c2: st.button("SEARCH ↗", use_container_width=True)
+
+raw=user_input.upper().strip(); ticker=resolve_ticker(raw); df=load_data(ticker)
+if df.empty: st.error(f"{raw} not found"); st.stop()
+last=float(df["Close"].dropna().iloc[-1]); live=get_live_price(ticker)
+if live==0: live=last
+low_min=float(df["Low"].tail(20).min()); tgt=last+(last-low_min)*1.5
+if tgt<=last: tgt=float(df["High"].tail(20).max())
+close=df["Close"]; ema20=close.ewm(20).mean(); ema50=close.ewm(50).mean()
+sig="BUY" if ema20.iloc[-1]>ema50.iloc[-1] and last>ema20.iloc[-1] else "SELL" if ema20.iloc[-1]<ema50.iloc[-1] else "HOLD"
+sig_class="buy-god" if sig=="BUY" else "sell-god"
+df_c=df.tail(100).copy(); m_line,s_line,hist=calc_macd(df_c["Close"]); st_line,st_dir=calc_st(df_c)
+st_sig="BUY" if st_dir.iloc[-1]==1 else "SELL"; st_color="#00FF88" if st_sig=="BUY" else "#FF4D6A"
+profit_main = round(((tgt-live)/live*100),1) if live>0 else 0
+
+st.markdown(f"""<div class="top-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="display:flex; align-items:center; gap:14px;"><h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw}</h2><span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-family:JetBrains Mono; font-size:10px; padding:5px 10px; border-radius:100px;">BSE:{raw}</span><span style="background: {st_color}18; border:1px solid {st_color}; color:{st_color}; font-family:Space Grotesk; font-size:10px; font-weight:700; padding:5px 12px; border-radius:100px;">ST {st_sig}</span></div><div style="display:flex; gap:16px; margin-top:16px;"><div style="background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.04)); border:1px solid rgba(0,255,136,0.25); border-left:3px solid #00FF88; border-radius:10px; padding:8px 14px;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">TARGET + PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">₹{round(tgt,2)} <span style="background: #00FF88; color:black; padding:2px 6px; border-radius:100px; font-size:10px;">▲ +{profit_main}%</span></p></div><div style="background: rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.2); border-radius:10px; padding:8px 14px;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">STOP LOSS</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">₹{round(low_min,2)}</p></div></div></div><div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:9px; font-family:JetBrains Mono; letter-spacing:2px;">LIVE BSE PRICE</p><p class="live-price">₹{round(live,2)}</p><div class="{sig_class}" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">{sig} ↗</div></div></div></div>""", unsafe_allow_html=True)
+
+tab_bse, tab_chart, tab_tg = st.tabs(["📊 BSE TradingView PRO + Indicators", "📈 Plotly", "📲 Telegram Setup"])
+
+with tab_bse:
+    clean_sym = raw.replace(".NS","").replace(".BO","").strip()
+    bse_symbol = f"BSE:{clean_sym}"
+    st.markdown(f"""<div style="background: linear-gradient(90deg, #FF6A00, #FFD700); padding: 12px 16px; border-radius: 14px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><div style="display:flex; align-items:center; gap:10px;"><span style="font-family:Space Grotesk; font-weight:700; color:black; font-size:16px;">{bse_symbol} • PRO + Supertrend + MACD + RSI</span><span style="background:black; color:#00FF88; font-size:9px; padding:4px 8px; border-radius:100px; font-family:JetBrains Mono;">BUY/SELL INDICATORS ON</span></div></div>""", unsafe_allow_html=True)
+    # BSE TradingView with Studies: Supertrend, MACD, RSI
+    tv_bse_pro = f"https://s.tradingview.com/widgetembed/?frameElementId=tradingview_bse_pro&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1&studies_overrides=%7B%7D"
+    st.components.v1.iframe(tv_bse_pro, height=700, scrolling=False)
+    c1,c2=st.columns(2)
+    with c1: st.link_button(f"📥 Open {bse_symbol} TradingView", f"https://www.tradingview.com/chart/?symbol={bse_symbol}", use_container_width=True)
+    with c2: st.link_button(f"📷 Download Chart (Camera Icon on Chart)", f"https://www.tradingview.com/chart/?symbol={bse_symbol}", use_container_width=True)
+
+with tab_chart:
+    close_c=df_c["Close"]; e20=close_c.ewm(20).mean(); e50=close_c.ewm(50).mean()
+    delta=close_c.diff(); gain=(delta.where(delta>0,0)).rolling(14).mean(); loss=(-delta.where(delta<0,0)).rolling(14).mean()
+    rs=gain/loss.replace(0,0.001); rsi=100-(100/(1+rs))
+    fig=make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.04, row_heights=[0.62,0.19,0.19])
+    fig.add_trace(go.Candlestick(x=df_c.index, open=df_c["Open"], high=df_c["High"], low=df_c["Low"], close=df_c["Close"], increasing_line_color="#00FF88", decreasing_line_color="#FF4D6A"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df_c.index, y=e20, line=dict(color="#00D1FF",width=2), name="EMA20"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df_c.index, y=e50, line=dict(color="#FFAA00",width=1.5,dash="dash"), name="EMA50"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df_c.index, y=st_line, line=dict(color=st_color,width=2.5), name="Supertrend"), row=1, col=1)
+    colors=["#00FF88" if h>=0 else "#FF4D6A" for h in hist]
+    fig.add_trace(go.Scatter(x=df_c.index, y=m_line, line=dict(color="#00D1FF",width=2), name="MACD"), row=2, col=1)
+    fig.add_trace(go.Scatter(x=df_c.index, y=s_line, line=dict(color="#FFAA00",width=1.5), name="Signal"), row=2, col=1)
+    fig.add_trace(go.Bar(x=df_c.index, y=hist, marker_color=colors), row=2, col=1)
+    fig.add_trace(go.Scatter(x=df_c.index, y=rsi, line=dict(color="#C084FC",width=2), name="RSI"), row=3, col=1)
+    fig.update_layout(template="plotly_dark", height=620, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_rangeslider_visible=False, margin=dict(l=0,r=0,t=10,b=0))
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True})
+
+with tab_tg:
+    st.markdown("### 📲 Telegram Auto Setup - 9:15 AM")
+    tok=st.text_input("Bot Token", value=st.session_state.tg_token, type="password", placeholder="123456:ABC-YourBotToken")
+    chat=st.text_input("Chat ID", value=st.session_state.tg_chat, placeholder="123456789")
+    if st.button("💾 Save Telegram & Test Now"):
+        st.session_state.tg_token=tok; st.session_state.tg_chat=chat
+        if morning_picks:
+            msg = f"✅ *FinTrade V43 Test - {today_str}*\n\n"
+            for i, p in enumerate(morning_picks, 1):
+                msg += f"#{i} *{p['name']}* - ₹{round(p['live'],2)} Target ₹{round(p['target'],2)} (+{p['profit_pct']}%)\n"
+            send_tg(tok, chat, msg)
+            st.success("✅ Test message sent! 9:15 AM ko auto ayega!")
+        else: st.warning("Picks not ready")
+    st.info("🔔 App ko 9:15 AM IST pe khula rakho ya server pe deploy karo - Telegram auto chala jayega! Auto refresh har 5 min pe prices update karega!")
+    if st.session_state.last_auto_sent:
+        st.success(f"Last auto sent: {st.session_state.last_auto_sent}")
