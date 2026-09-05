@@ -4,7 +4,7 @@ import base64, requests, re
 from datetime import date, datetime
 import pytz
 
-st.set_page_config(page_title="FinTrade God V43.3 FINAL", layout="wide", page_icon="💎")
+st.set_page_config(page_title="FinTrade God V43.4 FINAL", layout="wide", page_icon="💎")
 
 st.markdown("""
 <style>
@@ -76,7 +76,7 @@ def get_live_price(tick):
 def get_logo():
     try:
         with open("logo.png","rb") as f:
-            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="130" style="border-radius:16px; background:transparent; border:none;">'
+            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="130" style="border-radius:22px; background:transparent; border:none;">'
     except: return '<div style="font-size:38px;">💎</div>'
 
 def send_tg(token, chat, msg):
@@ -98,7 +98,7 @@ st.markdown(f"""
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
-     <span class="auto-badge">● V43.3 FINAL • BUG FREE</span>
+     <span class="auto-badge">● V43.4 FINAL FIX</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
      {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
@@ -107,7 +107,7 @@ st.markdown(f"""
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V43.3 FINAL</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">NO PORTFOLIO • FULL WIDTH</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V43.4 FINAL</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">NO PORTFOLIO • BUG FREE</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -178,7 +178,7 @@ now_ist = datetime.now(ist)
 today_str = str(date.today())
 if now_ist.hour == 9 and now_ist.minute >= 15 and now_ist.minute <= 20:
     if st.session_state.last_auto_sent!= today_str and st.session_state.tg_token and st.session_state.tg_chat and morning_picks:
-        msg = f"🌅 *FinTrade God V43.3 FINAL - 9:15 AM - {today_str}*\n\n"
+        msg = f"🌅 *FinTrade God V43.4 FINAL - 9:15 AM - {today_str}*\n\n"
         for i, p in enumerate(morning_picks, 1):
             msg += f"#{i} *{p['name']}* - ₹{round(p['live'],2)} (RSI {p['rsi']})\nTarget: ₹{round(p['target'],2)} (+{p['profit_pct']}%) SL: ₹{round(p['sl'],2)}\nScore: {p['score']}/110 BUY ✅\n\n"
         msg += f"NIFTY50: {int(indices_data.get('NIFTY50',{}).get('price',0)):,} | SENSEX: {int(indices_data.get('SENSEX',{}).get('price',0)):,}\n"
@@ -210,7 +210,7 @@ sig="BUY" if ema20.iloc[-1]>ema50.iloc[-1] and last>ema20.iloc[-1] else "SELL" i
 sig_class="buy-god" if sig=="BUY" else "sell-god"
 df_c=df.tail(100).copy(); m_line,s_line,hist=calc_macd(df_c["Close"]); st_line,st_dir=calc_st(df_c)
 st_sig="BUY" if st_dir.iloc[-1]==1 else "SELL"; st_color="#00FF88" if st_sig=="BUY" else "#FF4D6A"
-profit_main = round(((tgt-live)/live*100),1) if live>0 else 0)
+profit_main = round(((tgt-live)/live*100),1) if live>0 else 0
 
 st.markdown(f"""<div class="top-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="display:flex; align-items:center; gap:14px;"><h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw}</h2><span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-family:JetBrains Mono; font-size:10px; padding:5px 10px; border-radius:100px;">BSE:{raw}</span><span style="background: {st_color}18; border:1px solid {st_color}; color:{st_color}; font-family:Space Grotesk; font-size:10px; font-weight:700; padding:5px 12px; border-radius:100px;">ST {st_sig}</span></div><div style="display:flex; gap:16px; margin-top:16px;"><div style="background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.04)); border:1px solid rgba(0,255,136,0.25); border-left:3px solid #00FF88; border-radius:10px; padding:8px 14px;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">TARGET + PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">₹{round(tgt,2)} <span style="background: #00FF88; color:black; padding:2px 6px; border-radius:100px; font-size:10px;">▲ +{profit_main}%</span></p></div><div style="background: rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.2); border-radius:10px; padding:8px 14px;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">STOP LOSS</p><p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">₹{round(low_min,2)}</p></div></div></div><div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:9px; font-family:JetBrains Mono; letter-spacing:2px;">LIVE BSE PRICE</p><p class="live-price">₹{round(live,2)}</p><div class="{sig_class}" style="margin-top:14px; display:inline-block; min-width:130px; text-align:center;">{sig} ↗</div></div></div></div>""", unsafe_allow_html=True)
 
@@ -247,10 +247,10 @@ with tab_tg:
     if st.button("💾 Save & Test Now"):
         st.session_state.tg_token=tok; st.session_state.tg_chat=chat
         if morning_picks:
-            msg = f"✅ *V43.3 FINAL Test - {today_str}*\n"
+            msg = f"✅ *V43.4 FINAL Test - {today_str}*\n"
             for i, p in enumerate(morning_picks, 1):
                 msg += f"#{i} *{p['name']}* ₹{round(p['live'],2)} → ₹{round(p['target'],2)} (+{p['profit_pct']}%)\n"
             send_tg(tok, chat, msg)
             st.success("✅ Sent! 9:15 AM auto chalega")
 
-st.caption(f"V43.3 FINAL • Bug Free • No Portfolio • Logo Fixed • Cache 5M • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+st.caption(f"V43.4 FINAL • Bug Fixed • No Portfolio • Logo #6A5AE0 • Cache 5M • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
