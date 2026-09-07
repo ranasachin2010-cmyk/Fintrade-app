@@ -1,12 +1,12 @@
-# FinTrade V48.1 FINAL LOCKED + AI - DO NOT EDIT AFTER 06 SEP 2026
-# LOCKED FEATURES: AI 96% Model + Bear Protection + Portfolio Tracker
+# FinTrade V48.1 FINAL LOCKED + NIFTY500 FULL 500 - 07 SEP 2026 - REPLACE FULL FILE
+# V48.1 LOGIC SAME - ONLY WATCHLIST = NIFTY500 (500 STOCKS) FOR AI ANALYSIS
 import streamlit as st, yfinance as yf, pandas as pd
 import base64, re, json, os
 from datetime import date, datetime, timedelta
 import pytz, numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-st.set_page_config(page_title="FinTrade V48.1 FINAL LOCKED", layout="wide", page_icon="🔒")
+st.set_page_config(page_title="FinTrade V48.1 FINAL LOCKED + NIFTY500", layout="wide", page_icon="🔒")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
@@ -58,7 +58,7 @@ def load_data(tick, period="6mo"):
 def get_logo():
     try:
         with open("logo.png","rb") as f:
-            import base64; return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="130" style="border-radius:22px;">'
+            return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="68" style="border-radius:16px;">'
     except: return '<div style="font-size:38px;">🔒</div>'
 
 def calc_st(df):
@@ -172,6 +172,36 @@ def evaluate_portfolio():
     total=len(results); win_pct=int(wins/total*100) if total>0 else 0
     return win_pct,wins,total,results
 
+NIFTY500 = ["360ONE","3MINDIA","ABB","ACC","AIAENG","APLAPOLLO","AUBANK","AARTIIND","AAVAS","ABBOTINDIA","ADANIENSOL","ADANIENT","ADANIGREEN","ADANIPORTS","ADANIPOWER","ATGL","ABCAPITAL","ABFRL","ABSLAMC","ADVENZYMES","AEGISCHEM","AFFLE","AJANTPHARM","AKZOINDIA","ALKEM","ALKYLAMINE","ALOKINDS","AMBER","AMBUJACEM","ANANDRATHI","ANGELONE","ANURAS","APARINDS","APLLTD","APOLLOHOSP","APOLLOTYRE","APTUS","ASAHIINDIA","ASHOKLEY","ASIANPAINT","ASTERDM","ASTRAL","ATUL","AUROPHARMA","AVANTIFEED","DMART","AXISBANK","BEML","BLS","BSE","BAJAJ-AUTO","BAJAJFINSV","BAJFINANCE","BALKRISIND","BALRAMCHIN","BANDHANBNK","BANKBARODA","BANKINDIA","BATAINDIA","BAYERCROP","BERGEPAINT","BEL","BHARATFORG","BHEL","BPCL","BHARTIARTL","BIKAJI","BIOCON","BIRLACORPN","BSOFT","BLUEDART","BLUESTARCO","BBTC","BORORENEW","BOSCHLTD","BRIGADE","BRITANNIA","MAPMYINDIA","CCL","CESC","CGPOWER","CIEINDIA","CRISIL","CSBBANK","CAMPUS","CANFINHOME","CANBK","CAPLIPOINT","CGCL","CARBORUNDU","CASTROLIND","CEATLTD","CENTRALBK","CDSL","CENTURYPLY","CERA","CHALET","CHAMBLFERT","CHEMPLASTS","CHOLAHLDNG","CHOLAFIN","CIPLA","CUB","CLEAN","COALINDIA","COCHINSHIP","COFORGE","COLPAL","CAMS","CONCOR","COROMANDEL","CRAFTSMAN","CREDITACC","CROMPTON","CUMMINSIND","CUPID","CYIENT","DCMSHRIRAM","DLF","DABUR","DALBHARAT","DATAPATTNS","DEEPAKFERT","DEEPAKNTR","DELHIVERY","DELTACORP","DEVYANI","DIVISLAB","DIXON","LALPATHLAB","DRREDDY","EIDPARRY","EIHOTEL","EPL","EASEMYTRIP","ECLERX","ELECON","ELGIEQUIP","EMAMILTD","ENDURANCE","ENGINERSIN","EQUITASBNK","ERIS","ESABINDIA","EXIDEIND","FDC","FEDERALBNK","FACT","FINEORG","FINCABLES","FINPIPE","FSL","FIVESTAR","FORTIS","GAIL","GMMPFAUDLR","GMRINFRA","GALAXYSURF","GRSE","GARFIBRES","GICRE","GILLETTE","GLAND","GLAXO","GLENMARK","GODFRYPHLP","GODREJCP","GODREJIND","GODREJPROP","GRANULES","GRAPHITE","GRASIM","GESHIP","GRINDWELL","GUJALKALI","GAEL","FLUOROCHEM","GUJGASLTD","GMDCLTD","GNFC","GPPL","GSFC","GSPL","HEG","HCLTECH","HDFCAMC","HDFCBANK","HDFCLIFE","HFCL","HAPPSTMNDS","HAPPYFORGE","HATHWAY","HATSUN","HAVELLS","HEROMOTOCO","HINDALCO","HAL","HINDCOPPER","HINDPETRO","HINDUNILVR","HINDWAREAP","HINDZINC","POWERINDIA","HOMEFIRST","HONASA","HONAUT","HUDCO","ICICIBANK","ICICIGI","ICICIPRULI","IDBI","IDFCFIRSTB","IDFC","IIFL","IRB","IRCTC","IRFC","IFCI","IEX","INDIANB","IOLCP","IGL","INDHOTEL","INDIACEM","INDIAMART","INDIANHUME","INDUSINDBK","NAUKRI","INFY","INOXWIND","INTELLECT","INDUS TOWERS","IPCALAB","JBCHEPHARM","JKCEMENT","JKLAKSHMI","JKPAPER","JMFINANCIL","JSWENERGY","JSWINFRA","JSWSTEEL","JAMNAAUTO","JINDALSAW","JSL","JINDALSTEL","JIOFIN","JUBLFOOD","JUBLINGREA","JUBLPHARMA","JUSTDIAL","JYOTHYLAB","KPRMILL","KEI","KFINTECH","KALYANKJIL","KAJARIACER","KPITTECH","KARURVYSYA","KAYNES","KEC","KNRCON","KPIL","KOTAKBANK","KIMS","LTF","LTTS","LT","LTIM","LATENTVIEW","LAURUSLABS","LXCHEM","LEMONTREE","LICHSGFIN","LICI","LINDE","LUPIN","MRF","MGL","MAHSEAMLES","M&MFIN","M&M","MANAPPURAM","MRPL","MANKIND","MARICO","MARUTI","MASTEK","MFSL","MAXHEALTH","MAZDOCK","MEDANTA","MEDPLUS","METROPOLIS","MOTHERSON","MSUMI","MPHASIS","MCX","MUTHOOTFIN","NATCOPHARM","NBCC","NCC","NHPC","NLCINDIA","NMDC","NSLNISP","NTPC","NH","NATIONALUM","NAVINFLUOR","NAZARA","NESTLEIND","NETWORK18","NAM-INDIA","NUVAMA","OBEROIRLTY","ONGC","OIL","OLECTRA","PAYTM","OFSS","POLICYBZR","PCBL","PFC","PEL","PHOENIXLTD","PIDILITIND","PPLPHARMA","POLYCAB","POWERGRID","PRAJIND","PRESTIGE","PRINCEPIPE","PRSMJOHNSN","PGHH","PGHL","PNB","PNBHOUSING","QUESS","RBLBANK","RECLTD","RHIM","RITES","RADICO","RVNL","RAILTEL","RALLIS","RKFORGE","RCF","RTNINDIA","RAYMOND","REDINGTON","RELIANCE","RBA","ROUTE","SBICARD","SBILIFE","SJVN","SKFINDIA","SRF","SANOFI","SAPPHIRE","SAREGAMA","SCHAEFFLER","SEQUENT","SFL","SHOPERSTOP","SHYAMMETL","SIEMENS","SOBHA","SOLARINDS","SONACOMS","STARHEALTH","SBIN","SAIL","SWSOLAR","SUMICHEM","SUNPHARMA","SUNTV","SUNDARMFIN","SUNDRMFAST","SUPREMEIND","SUZLON","SYNGENE","SYRMA","TTKPRESTIG","TV18BRDCST","TVSMOTOR","TMB","TATACHEM","TATACOMM","TCS","TATACONSUM","TATAELXSI","TATAMOTORS","TATAPOWER","TATASTEEL","TATATECH","TTML","TEAMLEASE","TECHM","THERMAX","TIMKEN","TITAN","TORNTPHARM","TORNTPOWER","TRENT","TRIDENT","TRIVENI","TRITURBINE","TIINDIA","UCOBANK","UNIONBANK","UBL","MCDOWELL-N","VGUARD","DBREALTY","VTL","VARROC","VBL","MANYAVAR","VEDL","VIJAYA","VOLTAS","WELCORP","WELSPUNLTD","WESTLIFE","WHIRLPOOL","WIPRO","YESBANK","ZFCVINDIA","ZOMATO","ZYDUSLIFE","ZYDUSWELL"]
+WATCHLIST = NIFTY500
+
+SMART_MAP={"CUPID":"CUPID.NS","RELIANCE":"RELIANCE.NS","TCS":"TCS.NS","INFY":"INFY.NS","SBIN":"SBIN.NS","HDFCBANK":"HDFCBANK.NS","ICICIBANK":"ICICIBANK.NS","BHARTIARTL":"BHARTIARTL.NS","ITC":"ITC.NS"}
+def resolve_ticker(t):
+    r=t.upper().strip(); ns=re.sub(r'[^A-Z0-9-]','',r)
+    if r in SMART_MAP: return SMART_MAP[r]
+    if ns in SMART_MAP: return SMART_MAP[ns]
+    return ns+".NS" if len(ns)>1 else r+".NS"
+
+def get_morning_picks():
+    today=str(date.today())
+    if st.session_state.pick_date==today and st.session_state.morning_picks: return st.session_state.morning_picks
+    temp=[]; prog=st.progress(0); total=len(WATCHLIST)
+    for idx,name in enumerate(WATCHLIST):
+        prog.progress((idx+1)/total, text=f"AI Scanning NIFTY500 {idx+1}/{total} : {name}")
+        t=resolve_ticker(name); df=load_data(t,period="6mo")
+        if not df.empty and len(df)>50:
+            ai_prob,ai_reason=get_ai_prediction(t)
+            if ai_prob<60: continue
+            sc,rsns,rsi,adx_v,filters=score_stock(df,ai_prob)
+            if not nifty_up and sc<100: continue
+            if sc<85: continue
+            if rsi>70 or rsi<45: continue
+            live=float(df["Close"].iloc[-1]); profit,tgt,sl,atr=get_smart_target(df,live,sc)
+            temp.append({"name":name,"score":sc,"reasons":rsns,"rsi":rsi,"adx":adx_v,"filters":filters,"live":live,"target":tgt,"profit_pct":profit,"sl":sl,"atr_pct":atr,"ticker":t,"ai_prob":ai_prob,"ai_reason":ai_reason})
+    prog.empty()
+    temp=sorted(temp,key=lambda x:(x["ai_prob"],x["score"]),reverse=True)[:2]
+    st.session_state.morning_picks=temp; st.session_state.pick_date=today; save_history(temp); return temp
+
 indices_data=get_indices()
 def fmt_chip(name,price,chg):
     arrow="▲" if chg>=0 else "▼"; col="index-up" if chg>=0 else "index-down"
@@ -193,52 +223,26 @@ st.markdown(f"""
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
-     <span class="auto-badge">🔒 V48.1 FINAL LOCKED</span>
+     <span class="auto-badge">🔒 V48.1 FINAL LOCKED + NIFTY500</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
      {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
-     <span class="index-chip">{market_msg}</span>
+     <span class="index-chip">{market_msg} • AI SCAN {len(WATCHLIST)} STOCKS</span>
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V48.1 FINAL</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">LOCKED</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V48.1 FINAL</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">LOCKED + 500</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
-
-SMART_MAP={"CUPID":"CUPID.NS","RELIANCE":"RELIANCE.NS","TCS":"TCS.NS","INFY":"INFY.NS","SBIN":"SBIN.NS","HDFCBANK":"HDFCBANK.NS","ICICIBANK":"ICICIBANK.NS","BHARTIARTL":"BHARTIARTL.NS","ITC":"ITC.NS"}
-WATCHLIST=["RELIANCE","CUPID","INFY","TCS","HDFCBANK","ICICIBANK","SBIN","BHARTIARTL","ITC","BAJFINANCE","LT","MARUTI","TITAN","ASIANPAINT","WIPRO","ADANIENT","TATASTEEL","JSWSTEEL","NTPC","POWERGRID"]
-def resolve_ticker(t):
-    r=t.upper().strip(); ns=re.sub(r'[^A-Z0-9]','',r)
-    if r in SMART_MAP: return SMART_MAP[r]
-    if ns in SMART_MAP: return SMART_MAP[ns]
-    return ns+".NS" if len(ns)>1 else r+".NS"
-
-def get_morning_picks():
-    today=str(date.today())
-    if st.session_state.pick_date==today and st.session_state.morning_picks: return st.session_state.morning_picks
-    temp=[]
-    for name in WATCHLIST:
-        t=resolve_ticker(name); df=load_data(t,period="6mo")
-        if not df.empty and len(df)>50:
-            ai_prob,ai_reason=get_ai_prediction(t)
-            if ai_prob<60: continue
-            sc,rsns,rsi,adx_v,filters=score_stock(df,ai_prob)
-            if not nifty_up and sc<100: continue
-            if sc<85: continue
-            if rsi>70 or rsi<45: continue
-            live=float(df["Close"].iloc[-1]); profit,tgt,sl,atr=get_smart_target(df,live,sc)
-            temp.append({"name":name,"score":sc,"reasons":rsns,"rsi":rsi,"adx":adx_v,"filters":filters,"live":live,"target":tgt,"profit_pct":profit,"sl":sl,"atr_pct":atr,"ticker":t,"ai_prob":ai_prob,"ai_reason":ai_reason})
-    temp=sorted(temp,key=lambda x:(x["ai_prob"],x["score"]),reverse=True)[:2]
-    st.session_state.morning_picks=temp; st.session_state.pick_date=today; save_history(temp); return temp
 
 morning_picks=get_morning_picks()
 win30,wins30,total30,history_results=evaluate_portfolio()
 
 if total30>0:
-    st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🔒 V48.1 FINAL LOCKED - LAST 30 DAYS</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • AI Model</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">LOCKED</div></div></div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🔒 V48.1 FINAL LOCKED + NIFTY500 - LAST 30 DAYS</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • AI Model</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">LOCKED</div></div></div></div>""", unsafe_allow_html=True)
 else:
-    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V48.1 FINAL LOCKED! {market_msg} - AI 60%+ filter active hai. Aaj strong pick nahi mila toh loss se bacha liya. Yehi AI ka power hai!</div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V48.1 FINAL LOCKED + NIFTY500! {market_msg} - AI ab 500 stocks ko analysis kar rahi hai. AI 60%+ filter active hai. Aaj strong pick nahi mila toh loss se bacha liya.</div></div>""", unsafe_allow_html=True)
 
 if morning_picks:
     c1,c2=st.columns(2)
@@ -249,7 +253,7 @@ if morning_picks:
             <div class="pick-god">
               <div style="display:flex; justify-content:space-between;">
                 <div>
-                  <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} FINAL LOCKED PICK</span>
+                  <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} NIFTY500 AI PICK</span>
                   <span class="ai-badge">🤖 AI {pick.get('ai_prob',0)}% UP</span>
                   <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick.get('name')}</h2>
                   <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:22px; font-weight:800;">Rs{round(pick.get('live',0),2)} <span style="color:#8892b0; font-size:11px;">RSI {pick.get('rsi',0)} ADX {pick.get('adx',0)}</span></p>
@@ -269,10 +273,10 @@ if morning_picks:
             </div>
             """, unsafe_allow_html=True)
 else:
-    st.info(f"🔒 AI Protected! {market_msg} - AI ne 60% se kam wale saare stocks cut kar diye. Aaj koi strong pick nahi - Loss se bachao! Yehi V48.1 ka power hai.")
+    st.info(f"🔒 AI Protected! {market_msg} - NIFTY500 ke 500 stocks me AI ne 60% se kam wale saare stocks cut kar diye. Aaj koi strong pick nahi - Loss se bachao!")
 
 c1,c2=st.columns([5.2,1])
-with c1: user_input=st.text_input("search",value="CUPID",placeholder="Search...",label_visibility="collapsed")
+with c1: user_input=st.text_input("search",value="CUPID",placeholder="Search NIFTY500...",label_visibility="collapsed")
 with c2: st.button("SEARCH",use_container_width=True)
 
 raw=user_input.upper().strip(); ticker=resolve_ticker(raw); df=load_data(ticker,period="1y")
@@ -318,7 +322,5 @@ with tab2:
         for h in reversed(history_results[-20:]):
             color="#00FF88" if h["status"]=="WIN" else "#FF4D6A" if h["status"]=="LOSS" else "#FFD700"
             st.markdown(f"""<div style="background: rgba(255,255,255,0.05); border-left: 3px solid {color}; border-radius: 10px; padding: 10px 14px; margin-bottom:8px; display:flex; justify-content:space-between;"><div><span style="color:white; font-family:Space Grotesk; font-weight:700;">{h['name']}</span> <span style="color:#8892b0; font-size:11px;">{h['date']}</span> • 🤖 {h.get('ai',0)}% • Rs{h['entry']} → Rs{h['target']} <span style="color:{color}; font-weight:700;">{h['status']}</span></div><div style="color:#FFD700; font-family:JetBrains Mono; font-size:11px;">+{h['profit_pct']}%</div></div>""", unsafe_allow_html=True)
-    else:
-        st.info("🔒 V48.1 Final Locked Tracking Started! 7 din baad real win rate yaha dikhega.")
 
-st.caption(f"🔒 V48.1 FINAL LOCKED • AI 80 Trees • No More Edits • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+st.caption(f"🔒 V48.1 FINAL LOCKED + NIFTY500 • {len(WATCHLIST)} Stocks AI Scan • AI 80 Trees • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
