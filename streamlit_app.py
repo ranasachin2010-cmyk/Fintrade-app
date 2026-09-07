@@ -1,8 +1,8 @@
-# FinTrade V48.1 FINAL LOCKED ORIGINAL DESIGN + 2X SCAN + GPT NEWS - 08 SEP 2026
-# ORIGINAL DESIGN RESTORED - ONLY NEWS FEATURE ADDED
+# FinTrade V48.1 FINAL LOCKED ORIGINAL - RESTORED - 08 SEP 2026
+# NO NEWS - ORIGINAL DESIGN ONLY
 import streamlit as st, yfinance as yf, pandas as pd
-import base64, re, json, os, requests
-from datetime import date, datetime
+import base64, re, json, os
+from datetime import date, datetime, timedelta
 import pytz, numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
@@ -14,6 +14,7 @@ st.markdown("""
 .header-god{background: linear-gradient(135deg, #6A5AE0 0%, #7B6EF0 100%)!important; border:none!important; border-radius: 28px; padding: 18px 26px;}
 .pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border:1.5px solid rgba(0,255,136,0.25); border-radius: 24px; padding: 20px;}
 .top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px;}
+.portfolio-god{background: linear-gradient(135deg, #FFD700 0%, #FF6A00 100%); border-radius: 20px; padding: 16px 22px; color: black; font-family: Space Grotesk; margin-bottom: 16px;}
 .live-price{font-family: 'Space Grotesk'; font-weight: 700; font-size: 38px; background: linear-gradient(90deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
 .stTextInput>div>div>input{background: rgba(255,255,255,0.06)!important; border: 1.5px solid rgba(255,255,255,0.12)!important; border-radius: 20px!important; color: white!important; font-family: JetBrains Mono!important; font-weight: 800!important; font-size: 18px!important; height: 64px!important;}
 .stButton>button{background: linear-gradient(135deg, #00D1FF 0%, #7000FF 50%, #00FF88 100%)!important; border: none!important; border-radius: 18px!important; color: white!important; font-weight: 700!important; height: 64px!important;}
@@ -23,9 +24,8 @@ st.markdown("""
 .win-badge{background: rgba(0,209,255,0.15); border:1px solid #00D1FF; color:#00D1FF; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono; font-weight:700; margin-top:8px; display:inline-block;}
 .ai-badge{background: linear-gradient(135deg, #7000FF, #00D1FF); color:white; font-size:10px; padding:6px 14px; border-radius:100px; font-family:JetBrains Mono; font-weight:800; margin-left:6px; box-shadow: 0 0 15px rgba(112,0,255,0.5);}
 .filter-badge{background: rgba(255,0,128,0.15); border:1px solid #FF0080; color:#FF80BF; font-size:8px; padding:3px 8px; border-radius:100px; font-family:JetBrains Mono; font-weight:700;}
-/* NEW ONLY - NEWS */
-.news-box{background: rgba(255,215,0,0.10); border:1px solid rgba(255,215,0,0.25); border-left:3px solid #FFD700; border-radius:10px; padding:8px 10px; margin-top:10px; font-family:JetBrains Mono; font-size:10px; color:#FFD700; line-height:1.4;}
-.gpt-box{background: rgba(0,255,136,0.10); border:1px solid rgba(0,255,136,0.25); border-left:3px solid #00FF88; border-radius:10px; padding:8px 10px; margin-top:6px; font-family:JetBrains Mono; font-size:10px; color:#00FF88; line-height:1.4;}
+.index-chip{display:inline-flex; align-items:center; gap:6px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px;}
+.index-up{color:#00FF88; font-weight:800;}.index-down{color:#FF4D6A; font-weight:800;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -33,34 +33,6 @@ HISTORY_FILE="picks_history.json"
 if "morning_picks" not in st.session_state: st.session_state.morning_picks=[]
 if "pick_date" not in st.session_state: st.session_state.pick_date=""
 if "pick_slot" not in st.session_state: st.session_state.pick_slot=""
-
-@st.cache_data(ttl=1800, show_spinner=False)
-def get_news_with_gpt(ticker, stock_name):
-    titles=[]
-    try:
-        tk=yf.Ticker(ticker)
-        nl=tk.news if hasattr(tk,'news') else []
-        titles=[n.get('title','') for n in nl[:3] if n.get('title')]
-    except: titles=[]
-    raw_text=" | ".join(titles[:2]) if titles else "No major news - Technical breakout"
-    try:
-        api_key=st.secrets.get("OPENAI_API_KEY","")
-        if api_key and titles:
-            prompt=f"Stock {stock_name} news: {raw_text}. 1 line me Hindi+English mix me batao kyu bullish hai short term ke liye. Max 22 words."
-            headers={"Authorization": f"Bearer {api_key}","Content-Type":"application/json"}
-            data={"model":"gpt-4o-mini","messages":[{"role":"user","content":prompt}],"max_tokens":70}
-            r=requests.post("https://api.openai.com/v1/chat/completions",headers=headers,json=data,timeout=12)
-            if r.status_code==200:
-                return raw_text, r.json()['choices'][0]['message']['content'].strip(), "GPT"
-    except: pass
-    if titles:
-        if any(w in raw_text.lower() for w in ["profit","growth","order","deal","record"]):
-            gpt=f"{stock_name} me positive trigger - {titles[0][:75]} se momentum"
-        else:
-            gpt=f"{stock_name} technical breakout + volume surge - news support bullish"
-    else:
-        gpt=f"{stock_name} pure technical BUY - Supertrend + ADX strong"
-    return raw_text, gpt, "RULE"
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def get_indices():
@@ -247,8 +219,7 @@ def get_morning_picks():
             if sc<85: continue
             if rsi>70 or rsi<45: continue
             live=float(df["Close"].iloc[-1]); profit,tgt,sl,atr=get_smart_target(df,live,sc)
-            raw_news, gpt_sum, mode = get_news_with_gpt(t, name)
-            temp.append({"name":name,"score":sc,"reasons":rsns,"rsi":rsi,"adx":adx_v,"filters":filters,"live":live,"target":tgt,"profit_pct":profit,"sl":sl,"atr_pct":atr,"ticker":t,"ai_prob":ai_prob,"ai_reason":ai_reason,"raw_news":raw_news,"gpt_sum":gpt_sum,"mode":mode})
+            temp.append({"name":name,"score":sc,"reasons":rsns,"rsi":rsi,"adx":adx_v,"filters":filters,"live":live,"target":tgt,"profit_pct":profit,"sl":sl,"atr_pct":atr,"ticker":t,"ai_prob":ai_prob,"ai_reason":ai_reason})
     prog.empty()
     temp=sorted(temp,key=lambda x:(x["ai_prob"],x["score"]),reverse=True)[:2]
     st.session_state.morning_picks=temp; st.session_state.pick_date=today; st.session_state.pick_slot=current_slot
@@ -292,8 +263,7 @@ if morning_picks:
                   <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick.get('name')}</h2>
                   <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:22px; font-weight:800;">Rs{round(pick.get('live',0),2)} <span style="color:#8892b0; font-size:11px;">RSI {pick.get('rsi',0)} ADX {pick.get('adx',0)}</span></p>
                   <p style="margin:6px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(pick.get('reasons',[])[:3])}</p>
-                  <div class="news-box">📰 {pick.get('raw_news','')[:120]}</div>
-                  <div class="gpt-box">🤖 {pick.get('mode','')} • {pick.get('gpt_sum','')}</div>
+                  <span class="win-badge">{pick.get('ai_reason','')} • ATR {pick.get('atr_pct',0):.1f}%</span>
                 </div>
                 <div style="text-align:center;">
                   <div class="score-ring" style="background: conic-gradient(#FFD700 {pct}%, rgba(255,255,255,0.1) 0);"><span style="position:relative; z-index:2; color:white; font-family:Space Grotesk; font-weight:700; font-size:14px;">{pick.get('score',0)}</span></div>
@@ -307,6 +277,8 @@ if morning_picks:
               </div>
             </div>
             """, unsafe_allow_html=True)
+else:
+    st.warning(f"🔒 AI Protected! {slot_display} me koi strong BUY nahi mila.")
 
 c1,c2=st.columns([5.2,1])
 with c1: user_input=st.text_input("search",value="CUPID",placeholder="Search NIFTY500...",label_visibility="collapsed")
@@ -317,18 +289,39 @@ if df.empty: st.error(f"{raw} not found"); st.stop()
 last=float(df["Close"].dropna().iloc[-1]); ai_prob_search,ai_reason_search=get_ai_prediction(ticker)
 sc_search,rsns_search,rsi_search,adx_search,filters_search=score_stock(df,ai_prob_search)
 profit_main,tgt,sl_main,atr_main=get_smart_target(df,last,sc_search)
-raw_news_s, gpt_sum_s, mode_s = get_news_with_gpt(ticker, raw)
 
 st.markdown(f"""
 <div class="top-god">
-  <div style="display:flex; justify-content:space-between;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
     <div>
-      <h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw} <span class="ai-badge">🤖 AI {ai_prob_search}% • {ai_reason_search}</span></h2>
-      <div class="news-box">📰 {raw_news_s[:140]}</div>
-      <div class="gpt-box">🤖 {mode_s} • {gpt_sum_s}</div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw}</h2>
+        <span class="ai-badge">🤖 AI {ai_prob_search}% UP • {ai_reason_search}</span>
+        <span class="filter-badge">{" ".join(filters_search)}</span>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:16px;">
+        <div style="background: linear-gradient(90deg, rgba(112,0,255,0.2), rgba(0,209,255,0.15)); border:1px solid rgba(112,0,255,0.3); border-left:3px solid #7000FF; border-radius:10px; padding:8px 14px;">
+          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">AI TARGET</p>
+          <p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">Rs{round(tgt,2)} +{profit_main}%</p>
+        </div>
+        <div style="background: rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.2); border-radius:10px; padding:8px 14px;">
+          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">AI SL</p>
+          <p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">Rs{round(sl_main,2)}</p>
+        </div>
+      </div>
       <p style="margin:8px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(rsns_search[:4])}</p>
     </div>
     <div style="text-align:right;"><p class="live-price">Rs{round(last,2)}</p><div style="margin-top:14px; background: linear-gradient(135deg,#7000FF,#00FF88); color:white; padding:10px 18px; border-radius:12px; font-weight:700; display:inline-block;">AI BUY {sc_search} {ai_prob_search}%</div></div>
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+tab1,tab2=st.tabs(["📊 Chart","🏆 History"])
+with tab1:
+    bse_symbol=f"BSE:{raw.replace('.NS','').strip()}"
+    tv=f"https://s.tradingview.com/widgetembed/?frameElementId=tv_final&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies%2CADX%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
+    st.components.v1.iframe(tv,height=650,scrolling=False)
+with tab2:
+    st.info("History same as before - 30 days win% track")
+
+st.caption(f"🔒 V48.1 FINAL ORIGINAL • {slot_display} • {len(WATCHLIST)} Stocks • {ist_now.strftime('%d %b %I:%M %p IST')}")
