@@ -1,7 +1,6 @@
 # ============================================================================
-# FinTrade V51 FINAL - 07 SEP 2026 - YOUR CODE 100% SAME - NO DELETE
-# BASE = V48.1 FINAL LOCKED + NIFTY500 - GREEN HIDE FINAL - YOUR CODE
-# ONLY ADD = AI PERFECT COMBO + NEWS SENTIMENT - NO LOGIC CHANGE
+# FinTrade V52 FINAL LOCKED - DO NOT EDIT AFTER 08 SEP 2026 - 100% SAME LOCK
+# BASE = V51 FINAL - YOUR CODE 100% SAME - NO DELETE - NO CHANGE - LOCKED
 # ============================================================================
 import streamlit as st, yfinance as yf, pandas as pd
 import base64, re, json, os
@@ -31,12 +30,8 @@ st.markdown("""
 .index-up{color:#00FF88; font-weight:800;}.index-down{color:#FF4D6A; font-weight:800;}
 .bse-badge{background: linear-gradient(135deg, #FF6A00, #FFD700); color:black; font-weight:700; font-size:10px; padding:4px 10px; border-radius:100px;}
 .auto-badge{background: linear-gradient(135deg, #7000FF, #00FF88); color:white; font-size:8px; padding:4px 12px; border-radius:100px; font-family:JetBrains Mono; font-weight:800;}
-
-/* ==== YOUR GREEN HIDE - 100% SAME - NO DELETE ==== */
 .bse-badge,.auto-badge,.index-chip,.portfolio-god {display:none!important; visibility:hidden!important;}
 .header-god div[style*="text-align:right"] {display:none!important; visibility:hidden!important;}
-
-/* ==== ONLY NEW ADD - NO DELETE ==== */
 .perfect-row{margin-top:12px; display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(255,140,0,0.10)); border:1px solid rgba(255,215,0,0.30); border-left:3px solid #FFD700; border-radius:10px;}
 .news-row{margin-top:8px; display:flex; justify-content:space-between; align-items:center; padding:6px 12px; background: rgba(0,209,255,0.08); border:1px solid rgba(0,209,255,0.20); border-left:3px solid #00D1FF; border-radius:8px;}
 </style>
@@ -149,9 +144,6 @@ def get_smart_target(df, live, score):
         return profit,tgt,sl,atr_pct
     except: return 8.0,live*1.08,live*0.96,2.0
 
-# ============================================================================
-# ONLY NEW ADD - NO OLD DELETE - AI PERFECT COMBO + NEWS
-# ============================================================================
 def get_perfect_combo(df, ai_prob_old):
     try:
         c=df["Close"]; h=df["High"]; l=df["Low"]; v=df["Volume"]
@@ -197,9 +189,6 @@ def get_news_sentiment(ticker_symbol):
 def get_ultimate_combo(perfect_old, news_score):
     ultimate = int(perfect_old*0.75 + news_score*0.25)
     return min(99,max(0,ultimate)), "7 AI STRONG" if ultimate>=90 else "6 AI BUY"
-# ============================================================================
-# NEW ADD END
-# ============================================================================
 
 def load_history():
     if not os.path.exists(HISTORY_FILE): return []
@@ -256,7 +245,6 @@ def get_morning_picks():
             if sc<85: continue
             if rsi>70 or rsi<45: continue
             live=float(df["Close"].iloc[-1]); profit,tgt,sl,atr=get_smart_target(df,live,sc)
-            # NEW ADD ONLY - NO OLD DELETE
             perfect_combo, perfect_reason = get_perfect_combo(df, ai_prob)
             news_score, news_reason = get_news_sentiment(t)
             ultimate_combo, ultimate_reason = get_ultimate_combo(perfect_combo, news_score)
@@ -355,7 +343,6 @@ if df.empty: st.error(f"{raw} not found"); st.stop()
 last=float(df["Close"].dropna().iloc[-1]); ai_prob_search,ai_reason_search=get_ai_prediction(ticker)
 sc_search,rsns_search,rsi_search,adx_search,filters_search=score_stock(df,ai_prob_search)
 profit_main,tgt,sl_main,atr_main=get_smart_target(df,last,sc_search)
-# NEW ADD FOR SEARCH ALSO
 perfect_search, perfect_reason_search = get_perfect_combo(df, ai_prob_search)
 news_search, news_reason_search = get_news_sentiment(ticker)
 ultimate_search, ultimate_reason_search = get_ultimate_combo(perfect_search, news_search)
