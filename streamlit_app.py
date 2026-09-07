@@ -1,5 +1,5 @@
-# SAME V48.1 FINAL LOCKED + NIFTY500 - GREEN HIDE EDITION - 07 SEP 2026
-# LOGIC 0% CHANGE - ONLY UI HIDE
+# FinTrade V48.1 FINAL LOCKED + NIFTY500 - GREEN HIDE FINAL - 07 SEP 2026
+# LOGIC 0% CHANGE - ONLY UI HIDE - BACKGROUND WORK CONTINUE
 import streamlit as st, yfinance as yf, pandas as pd
 import base64, re, json, os
 from datetime import date, datetime, timedelta
@@ -29,8 +29,9 @@ st.markdown("""
 .bse-badge{background: linear-gradient(135deg, #FF6A00, #FFD700); color:black; font-weight:700; font-size:10px; padding:4px 10px; border-radius:100px;}
 .auto-badge{background: linear-gradient(135deg, #7000FF, #00FF88); color:white; font-size:8px; padding:4px 12px; border-radius:100px; font-family:JetBrains Mono; font-weight:800;}
 
-/* ==== GREEN MARKED HIDE - NO LOGIC CHANGE - ONLY UI HIDE ==== */
+/* ==== GREEN MARKED ALL HIDE - NO LOGIC CHANGE - BACKGROUND WORK CONTINUE ==== */
 .bse-badge,.auto-badge,.index-chip,.portfolio-god {display:none!important; visibility:hidden!important;}
+.header-god div[style*="text-align:right"] {display:none!important; visibility:hidden!important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -238,11 +239,10 @@ st.markdown(f"""
 morning_picks=get_morning_picks()
 win30,wins30,total30,history_results=evaluate_portfolio()
 
-# Portfolio banner still calculates but hidden via CSS
 if total30>0:
     st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🔒 V48.1 FINAL LOCKED + NIFTY500 - LAST 30 DAYS</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • AI Model</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">LOCKED</div></div></div></div>""", unsafe_allow_html=True)
 else:
-    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V48.1 FINAL LOCKED + NIFTY500! {market_msg} - AI ab 500 stocks ko analysis kar rahi hai. AI 60%+ filter active hai.</div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V48.1 FINAL LOCKED + NIFTY500! {market_msg} - AI ab 500 stocks ko analysis kar rahi hai.</div></div>""", unsafe_allow_html=True)
 
 if morning_picks:
     c1,c2=st.columns(2)
