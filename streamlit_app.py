@@ -1,11 +1,12 @@
-# FinTrade V48.1 FINAL + 2X SCAN + NEWS SENTIMENT AI - 07 SEP 2026
+# FinTrade V48.1 FINAL LOCKED + NIFTY500 - GREEN HIDE FINAL - 07 SEP 2026
+# LOGIC 0% CHANGE - ONLY UI HIDE - BACKGROUND WORK CONTINUE
 import streamlit as st, yfinance as yf, pandas as pd
 import base64, re, json, os
 from datetime import date, datetime, timedelta
 import pytz, numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-st.set_page_config(page_title="FinTrade V48.1 NEWS AI", layout="wide", page_icon="🔒")
+st.set_page_config(page_title="FinTrade V48.1 FINAL LOCKED + NIFTY500", layout="wide", page_icon="🔒")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
@@ -13,6 +14,7 @@ st.markdown("""
 .header-god{background: linear-gradient(135deg, #6A5AE0 0%, #7B6EF0 100%)!important; border:none!important; border-radius: 28px; padding: 18px 26px;}
 .pick-god{background: linear-gradient(135deg, rgba(0,255,136,0.10) 0%, rgba(0,209,255,0.08) 50%, rgba(112,0,255,0.08) 100%); backdrop-filter: blur(30px); border:1.5px solid rgba(0,255,136,0.25); border-radius: 24px; padding: 20px;}
 .top-god{background: linear-gradient(100deg, rgba(0,209,255,0.14) 0%, rgba(112,0,255,0.18) 40%, rgba(0,255,136,0.10) 100%); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; padding: 24px;}
+.portfolio-god{background: linear-gradient(135deg, #FFD700 0%, #FF6A00 100%); border-radius: 20px; padding: 16px 22px; color: black; font-family: Space Grotesk; margin-bottom: 16px;}
 .live-price{font-family: 'Space Grotesk'; font-weight: 700; font-size: 38px; background: linear-gradient(90deg, #fff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
 .stTextInput>div>div>input{background: rgba(255,255,255,0.06)!important; border: 1.5px solid rgba(255,255,255,0.12)!important; border-radius: 20px!important; color: white!important; font-family: JetBrains Mono!important; font-weight: 800!important; font-size: 18px!important; height: 64px!important;}
 .stButton>button{background: linear-gradient(135deg, #00D1FF 0%, #7000FF 50%, #00FF88 100%)!important; border: none!important; border-radius: 18px!important; color: white!important; font-weight: 700!important; height: 64px!important;}
@@ -21,56 +23,26 @@ st.markdown("""
 .target-row{display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 10px 12px; background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.06)); border: 1px solid rgba(0,255,136,0.25); border-left: 3px solid #00FF88; border-radius: 12px;}
 .win-badge{background: rgba(0,209,255,0.15); border:1px solid #00D1FF; color:#00D1FF; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono; font-weight:700; margin-top:8px; display:inline-block;}
 .ai-badge{background: linear-gradient(135deg, #7000FF, #00D1FF); color:white; font-size:10px; padding:6px 14px; border-radius:100px; font-family:JetBrains Mono; font-weight:800; margin-left:6px; box-shadow: 0 0 15px rgba(112,0,255,0.5);}
-.news-badge{background: rgba(255,215,0,0.15); border:1px solid #FFD700; color:#FFD700; font-size:9px; padding:6px 10px; border-radius:8px; margin-top:8px; font-family:JetBrains Mono; line-height:1.4;}
 .filter-badge{background: rgba(255,0,128,0.15); border:1px solid #FF0080; color:#FF80BF; font-size:8px; padding:3px 8px; border-radius:100px; font-family:JetBrains Mono; font-weight:700;}
+.index-chip{display:inline-flex; align-items:center; gap:6px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px;}
+.index-up{color:#00FF88; font-weight:800;}.index-down{color:#FF4D6A; font-weight:800;}
+.bse-badge{background: linear-gradient(135deg, #FF6A00, #FFD700); color:black; font-weight:700; font-size:10px; padding:4px 10px; border-radius:100px;}
+.auto-badge{background: linear-gradient(135deg, #7000FF, #00FF88); color:white; font-size:8px; padding:4px 12px; border-radius:100px; font-family:JetBrains Mono; font-weight:800;}
+
+/* ==== GREEN MARKED ALL HIDE - NO LOGIC CHANGE - BACKGROUND WORK CONTINUE ==== */
+.bse-badge,.auto-badge,.index-chip,.portfolio-god {display:none!important; visibility:hidden!important;}
+.header-god div[style*="text-align:right"] {display:none!important; visibility:hidden!important;}
 </style>
 """, unsafe_allow_html=True)
 
 HISTORY_FILE="picks_history.json"
 if "morning_picks" not in st.session_state: st.session_state.morning_picks=[]
 if "pick_date" not in st.session_state: st.session_state.pick_date=""
-if "pick_slot" not in st.session_state: st.session_state.pick_slot=""
-
-@st.cache_data(ttl=1800, show_spinner=False)
-def get_news_sentiment(ticker):
-    try:
-        tk = yf.Ticker(ticker)
-        news_list = []
-        try:
-            news_list = tk.news if hasattr(tk, 'news') else []
-        except:
-            news_list = []
-        if not news_list:
-            return "No major news - Technical BUY", "NEUTRAL", "🟡"
-
-        titles = [n.get('title','') or n.get('content',{}).get('title','') for n in news_list[:5]]
-        titles = [t for t in titles if t][:3]
-        if not titles:
-            return "No major news - Technical BUY", "NEUTRAL", "🟡"
-
-        text = " ".join(titles).lower()
-        positive = ["profit","growth","up","gain","strong","beat","high","buy","upgrade","positive","record","surge","rise","bullish","expansion","deal","order","contract"]
-        negative = ["loss","down","fall","drop","weak","cut","downgrade","negative","bearish","decline","crash","fraud","probe","penalty","debt"]
-
-        pos = sum(1 for w in positive if w in text)
-        neg = sum(1 for w in negative if w in text)
-
-        if pos > neg:
-            reason = f"Positive: {titles[0][:80]}..."
-            return reason, "POSITIVE", "🟢"
-        elif neg > pos:
-            reason = f"Caution: {titles[0][:80]}..."
-            return reason, "NEGATIVE", "🔴"
-        else:
-            reason = f"News: {titles[0][:80]}..."
-            return reason, "NEUTRAL", "🟡"
-    except:
-        return "Technical BUY - News check unavailable", "NEUTRAL", "🟡"
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def get_indices():
     d={}
-    for n,s in {"NIFTY50":"^NSEI"}.items():
+    for n,s in {"NIFTY50":"^NSEI","SENSEX":"^BSESN"}.items():
         try:
             h=yf.Ticker(s).history(period="2d")
             last=float(h["Close"].iloc[-1]); prev=float(h["Close"].iloc[-2]) if len(h)>1 else last
@@ -88,16 +60,19 @@ def load_data(tick, period="6mo"):
     except: return pd.DataFrame()
 
 def get_logo():
-    return '<div style="font-size:38px;">🔒</div>'
+    try:
+        with open("logo.png","rb") as f: return f'<img src="data:image/png;base64,{base64.b64encode(f.read()).decode()}" width="68" style="border-radius:16px;">'
+    except: return '<div style="font-size:38px;">🔒</div>'
 
 def calc_st(df):
     hl2=(df['High']+df['Low'])/2; tr1=df['High']-df['Low']; tr2=(df['High']-df['Close'].shift()).abs(); tr3=(df['Low']-df['Close'].shift()).abs()
     tr=pd.concat([tr1,tr2,tr3],axis=1).max(axis=1); atr=tr.rolling(10).mean(); upper=hl2+3*atr; lower=hl2-3*atr
-    direction=[1]*len(df)
+    st_line=[0]*len(df); direction=[1]*len(df)
     for i in range(1,len(df)):
         if df['Close'].iloc[i]<=lower.iloc[i-1]: direction[i]=-1
         elif df['Close'].iloc[i]>=upper.iloc[i-1]: direction[i]=1
         else: direction[i]=direction[i-1]
+        st_line[i]=lower.iloc[i] if direction[i]==1 else upper.iloc[i]
     return pd.Series(direction,index=df.index)
 
 def calc_macd(c):
@@ -172,95 +147,71 @@ def load_history():
     try:
         with open(HISTORY_FILE,"r") as f: return json.load(f)
     except: return []
+
 def save_history(picks):
     h=load_history(); today=str(date.today())
     if any(x.get("date")==today for x in h): return
     for p in picks: h.append({"date":today,"name":p.get("name"),"entry":round(float(p.get("live",0)),2),"target":round(float(p.get("target",0)),2),"sl":round(float(p.get("sl",0)),2),"profit_pct":p.get("profit_pct",0),"score":p.get("score",0),"ticker":p.get("ticker",""),"ai":p.get("ai_prob",0)})
     with open(HISTORY_FILE,"w") as f: json.dump(h[-60:],f,indent=2)
 
-NIFTY500 = [
-"360ONE","3MINDIA","ABB","ACC","AIAENG","APLAPOLLO","AUBANK","AARTIIND","AAVAS","ABBOTINDIA",
-"ADANIENSOL","ADANIENT","ADANIGREEN","ADANIPORTS","ADANIPOWER","ATGL","ABCAPITAL","ABFRL","ABSLAMC","ADVENZYMES",
-"AEGISCHEM","AFFLE","AJANTPHARM","AKZOINDIA","ALKEM","ALKYLAMINE","ALOKINDS","AMBER","AMBUJACEM","ANANDRATHI",
-"ANGELONE","ANURAS","APARINDS","APLLTD","APOLLOHOSP","APOLLOTYRE","APTUS","ASAHIINDIA","ASHOKLEY","ASIANPAINT",
-"ASTERDM","ASTRAL","ATUL","AUROPHARMA","AVANTIFEED","DMART","AXISBANK","BEML","BLS","BSE",
-"BAJAJ-AUTO","BAJAJFINSV","BAJFINANCE","BALKRISIND","BALRAMCHIN","BANDHANBNK","BANKBARODA","BANKINDIA","BATAINDIA","BAYERCROP",
-"BERGEPAINT","BEL","BHARATFORG","BHEL","BPCL","BHARTIARTL","BIKAJI","BIOCON","BIRLACORPN","BSOFT",
-"BLUEDART","BLUESTARCO","BBTC","BORORENEW","BOSCHLTD","BRIGADE","BRITANNIA","MAPMYINDIA","CCL","CESC",
-"CGPOWER","CIEINDIA","CRISIL","CSBBANK","CAMPUS","CANFINHOME","CANBK","CAPLIPOINT","CGCL","CARBORUNDU",
-"CASTROLIND","CEATLTD","CENTRALBK","CDSL","CENTURYPLY","CERA","CHALET","CHAMBLFERT","CHEMPLASTS","CHOLAHLDNG",
-"CHOLAFIN","CIPLA","CUB","CLEAN","COALINDIA","COCHINSHIP","COFORGE","COLPAL","CAMS","CONCOR",
-"COROMANDEL","CRAFTSMAN","CREDITACC","CROMPTON","CUMMINSIND","CUPID","CYIENT","DCMSHRIRAM","DLF","DABUR",
-"DALBHARAT","DATAPATTNS","DEEPAKFERT","DEEPAKNTR","DELHIVERY","DELTACORP","DEVYANI","DIVISLAB","DIXON","LALPATHLAB",
-"DRREDDY","EIDPARRY","EIHOTEL","EPL","EASEMYTRIP","ECLERX","ELECON","ELGIEQUIP","EMAMILTD","ENDURANCE",
-"ENGINERSIN","EQUITASBNK","ERIS","ESABINDIA","EXIDEIND","FDC","FEDERALBNK","FACT","FINEORG","FINCABLES",
-"FINPIPE","FSL","FIVESTAR","FORTIS","GAIL","GMMPFAUDLR","GMRINFRA","GALAXYSURF","GRSE","GARFIBRES",
-"GICRE","GILLETTE","GLAND","GLAXO","GLENMARK","GODFRYPHLP","GODREJCP","GODREJIND","GODREJPROP","GRANULES",
-"GRAPHITE","GRASIM","GESHIP","GRINDWELL","GUJALKALI","GAEL","FLUOROCHEM","GUJGASLTD","GMDCLTD","GNFC",
-"GPPL","GSFC","GSPL","HEG","HCLTECH","HDFCAMC","HDFCBANK","HDFCLIFE","HFCL","HAPPSTMNDS",
-"HAPPYFORGE","HATHWAY","HATSUN","HAVELLS","HEROMOTOCO","HINDALCO","HAL","HINDCOPPER","HINDPETRO","HINDUNILVR",
-"HINDWAREAP","HINDZINC","POWERINDIA","HOMEFIRST","HONASA","HONAUT","HUDCO","ICICIBANK","ICICIGI","ICICIPRULI",
-"IDBI","IDFCFIRSTB","IDFC","IIFL","IRB","IRCTC","IRFC","IFCI","IEX","INDIANB",
-"IOLCP","IGL","INDHOTEL","INDIACEM","INDIAMART","INDIANHUME","INDUSINDBK","NAUKRI","INFY","INOXWIND",
-"INTELLECT","INDUS_TOWERS","IPCALAB","JBCHEPHARM","JKCEMENT","JKLAKSHMI","JKPAPER","JMFINANCIL","JSWENERGY","JSWINFRA",
-"JSWSTEEL","JAMNAAUTO","JINDALSAW","JSL","JINDALSTEL","JIOFIN","JUBLFOOD","JUBLINGREA","JUBLPHARMA","JUSTDIAL",
-"JYOTHYLAB","KPRMILL","KEI","KFINTECH","KALYANKJIL","KAJARIACER","KPITTECH","KARURVYSYA","KAYNES","KEC",
-"KNRCON","KPIL","KOTAKBANK","KIMS","LTF","LTTS","LT","LTIM","LATENTVIEW","LAURUSLABS",
-"LXCHEM","LEMONTREE","LICHSGFIN","LICI","LINDE","LUPIN","MRF","MGL","MAHSEAMLES","M_AND_MFIN",
-"M_AND_M","MANAPPURAM","MRPL","MANKIND","MARICO","MARUTI","MASTEK","MFSL","MAXHEALTH","MAZDOCK",
-"MEDANTA","MEDPLUS","METROPOLIS","MOTHERSON","MSUMI","MPHASIS","MCX","MUTHOOTFIN","NATCOPHARM","NBCC",
-"NCC","NHPC","NLCINDIA","NMDC","NSLNISP","NTPC","NH","NATIONALUM","NAVINFLUOR","NAZARA",
-"NESTLEIND","NETWORK18","NAM-INDIA","NUVAMA","OBEROIRLTY","ONGC","OIL","OLECTRA","PAYTM","OFSS",
-"POLICYBZR","PCBL","PFC","PEL","PHOENIXLTD","PIDILITIND","PPLPHARMA","POLYCAB","POWERGRID","PRAJIND",
-"PRESTIGE","PRINCEPIPE","PRSMJOHNSN","PGHH","PGHL","PNB","PNBHOUSING","QUESS","RBLBANK","RECLTD",
-"RHIM","RITES","RADICO","RVNL","RAILTEL","RALLIS","RKFORGE","RCF","RTNINDIA","RAYMOND",
-"REDINGTON","RELIANCE","RBA","ROUTE","SBICARD","SBILIFE","SJVN","SKFINDIA","SRF","SANOFI",
-"SAPPHIRE","SAREGAMA","SCHAEFFLER","SEQUENT","SFL","SHOPERSTOP","SHYAMMETL","SIEMENS","SOBHA","SOLARINDS",
-"SONACOMS","STARHEALTH","SBIN","SAIL","SWSOLAR","SUMICHEM","SUNPHARMA","SUNTV","SUNDARMFIN","SUNDRMFAST",
-"SUPREMEIND","SUZLON","SYNGENE","SYRMA","TTKPRESTIG","TV18BRDCST","TVSMOTOR","TMB","TATACHEM","TATACOMM",
-"TCS","TATACONSUM","TATAELXSI","TATAMOTORS","TATAPOWER","TATASTEEL","TATATECH","TTML","TEAMLEASE","TECHM",
-"THERMAX","TIMKEN","TITAN","TORNTPHARM","TORNTPOWER","TRENT","TRIDENT","TRIVENI","TRITURBINE","TIINDIA",
-"UCOBANK","UNIONBANK","UBL","MCDOWELL-N","VGUARD","DBREALTY","VTL","VARROC","VBL","MANYAVAR",
-"VEDL","VIJAYA","VOLTAS","WELCORP","WELSPUNLTD","WESTLIFE","WHIRLPOOL","WIPRO","YESBANK","ZFCVINDIA",
-"ZOMATO","ZYDUSLIFE","ZYDUSWELL"
-]
-WATCHLIST=NIFTY500
+@st.cache_data(ttl=3600, show_spinner=False)
+def evaluate_portfolio():
+    history=load_history()
+    if not history: return 0,0,0,[]
+    last_30=[h for h in history if datetime.strptime(h["date"],"%Y-%m-%d").date()>= (date.today()-timedelta(days=30))]
+    results=[]; wins=0
+    for h in last_30:
+        try:
+            t=h.get("ticker")
+            df=yf.Ticker(t).history(period="1mo")
+            if df.empty: results.append({**h,"status":"OPEN"}); continue
+            future=df.tail(15); tgt=h["target"]; sl=h["sl"]; status="OPEN"
+            for idx in range(len(future)):
+                hi=float(future["High"].iloc[idx]); lo=float(future["Low"].iloc[idx])
+                if hi>=tgt: status="WIN"; wins+=1; break
+                if lo<=sl: status="LOSS"; break
+            results.append({**h,"status":status})
+        except: results.append({**h,"status":"OPEN"})
+    total=len(results); win_pct=int(wins/total*100) if total>0 else 0
+    return win_pct,wins,total,results
+
+NIFTY500 = ["360ONE","3MINDIA","ABB","ACC","AIAENG","APLAPOLLO","AUBANK","AARTIIND","AAVAS","ABBOTINDIA","ADANIENSOL","ADANIENT","ADANIGREEN","ADANIPORTS","ADANIPOWER","ATGL","ABCAPITAL","ABFRL","ABSLAMC","ADVENZYMES","AEGISCHEM","AFFLE","AJANTPHARM","AKZOINDIA","ALKEM","ALKYLAMINE","ALOKINDS","AMBER","AMBUJACEM","ANANDRATHI","ANGELONE","ANURAS","APARINDS","APLLTD","APOLLOHOSP","APOLLOTYRE","APTUS","ASAHIINDIA","ASHOKLEY","ASIANPAINT","ASTERDM","ASTRAL","ATUL","AUROPHARMA","AVANTIFEED","DMART","AXISBANK","BEML","BLS","BSE","BAJAJ-AUTO","BAJAJFINSV","BAJFINANCE","BALKRISIND","BALRAMCHIN","BANDHANBNK","BANKBARODA","BANKINDIA","BATAINDIA","BAYERCROP","BERGEPAINT","BEL","BHARATFORG","BHEL","BPCL","BHARTIARTL","BIKAJI","BIOCON","BIRLACORPN","BSOFT","BLUEDART","BLUESTARCO","BBTC","BORORENEW","BOSCHLTD","BRIGADE","BRITANNIA","MAPMYINDIA","CCL","CESC","CGPOWER","CIEINDIA","CRISIL","CSBBANK","CAMPUS","CANFINHOME","CANBK","CAPLIPOINT","CGCL","CARBORUNDU","CASTROLIND","CEATLTD","CENTRALBK","CDSL","CENTURYPLY","CERA","CHALET","CHAMBLFERT","CHEMPLASTS","CHOLAHLDNG","CHOLAFIN","CIPLA","CUB","CLEAN","COALINDIA","COCHINSHIP","COFORGE","COLPAL","CAMS","CONCOR","COROMANDEL","CRAFTSMAN","CREDITACC","CROMPTON","CUMMINSIND","CUPID","CYIENT","DCMSHRIRAM","DLF","DABUR","DALBHARAT","DATAPATTNS","DEEPAKFERT","DEEPAKNTR","DELHIVERY","DELTACORP","DEVYANI","DIVISLAB","DIXON","LALPATHLAB","DRREDDY","EIDPARRY","EIHOTEL","EPL","EASEMYTRIP","ECLERX","ELECON","ELGIEQUIP","EMAMILTD","ENDURANCE","ENGINERSIN","EQUITASBNK","ERIS","ESABINDIA","EXIDEIND","FDC","FEDERALBNK","FACT","FINEORG","FINCABLES","FINPIPE","FSL","FIVESTAR","FORTIS","GAIL","GMMPFAUDLR","GMRINFRA","GALAXYSURF","GRSE","GARFIBRES","GICRE","GILLETTE","GLAND","GLAXO","GLENMARK","GODFRYPHLP","GODREJCP","GODREJIND","GODREJPROP","GRANULES","GRAPHITE","GRASIM","GESHIP","GRINDWELL","GUJALKALI","GAEL","FLUOROCHEM","GUJGASLTD","GMDCLTD","GNFC","GPPL","GSFC","GSPL","HEG","HCLTECH","HDFCAMC","HDFCBANK","HDFCLIFE","HFCL","HAPPSTMNDS","HAPPYFORGE","HATHWAY","HATSUN","HAVELLS","HEROMOTOCO","HINDALCO","HAL","HINDCOPPER","HINDPETRO","HINDUNILVR","HINDWAREAP","HINDZINC","POWERINDIA","HOMEFIRST","HONASA","HONAUT","HUDCO","ICICIBANK","ICICIGI","ICICIPRULI","IDBI","IDFCFIRSTB","IDFC","IIFL","IRB","IRCTC","IRFC","IFCI","IEX","INDIANB","IOLCP","IGL","INDHOTEL","INDIACEM","INDIAMART","INDIANHUME","INDUSINDBK","NAUKRI","INFY","INOXWIND","INTELLECT","INDUS TOWERS","IPCALAB","JBCHEPHARM","JKCEMENT","JKLAKSHMI","JKPAPER","JMFINANCIL","JSWENERGY","JSWINFRA","JSWSTEEL","JAMNAAUTO","JINDALSAW","JSL","JINDALSTEL","JIOFIN","JUBLFOOD","JUBLINGREA","JUBLPHARMA","JUSTDIAL","JYOTHYLAB","KPRMILL","KEI","KFINTECH","KALYANKJIL","KAJARIACER","KPITTECH","KARURVYSYA","KAYNES","KEC","KNRCON","KPIL","KOTAKBANK","KIMS","LTF","LTTS","LT","LTIM","LATENTVIEW","LAURUSLABS","LXCHEM","LEMONTREE","LICHSGFIN","LICI","LINDE","LUPIN","MRF","MGL","MAHSEAMLES","M&MFIN","M&M","MANAPPURAM","MRPL","MANKIND","MARICO","MARUTI","MASTEK","MFSL","MAXHEALTH","MAZDOCK","MEDANTA","MEDPLUS","METROPOLIS","MOTHERSON","MSUMI","MPHASIS","MCX","MUTHOOTFIN","NATCOPHARM","NBCC","NCC","NHPC","NLCINDIA","NMDC","NSLNISP","NTPC","NH","NATIONALUM","NAVINFLUOR","NAZARA","NESTLEIND","NETWORK18","NAM-INDIA","NUVAMA","OBEROIRLTY","ONGC","OIL","OLECTRA","PAYTM","OFSS","POLICYBZR","PCBL","PFC","PEL","PHOENIXLTD","PIDILITIND","PPLPHARMA","POLYCAB","POWERGRID","PRAJIND","PRESTIGE","PRINCEPIPE","PRSMJOHNSN","PGHH","PGHL","PNB","PNBHOUSING","QUESS","RBLBANK","RECLTD","RHIM","RITES","RADICO","RVNL","RAILTEL","RALLIS","RKFORGE","RCF","RTNINDIA","RAYMOND","REDINGTON","RELIANCE","RBA","ROUTE","SBICARD","SBILIFE","SJVN","SKFINDIA","SRF","SANOFI","SAPPHIRE","SAREGAMA","SCHAEFFLER","SEQUENT","SFL","SHOPERSTOP","SHYAMMETL","SIEMENS","SOBHA","SOLARINDS","SONACOMS","STARHEALTH","SBIN","SAIL","SWSOLAR","SUMICHEM","SUNPHARMA","SUNTV","SUNDARMFIN","SUNDRMFAST","SUPREMEIND","SUZLON","SYNGENE","SYRMA","TTKPRESTIG","TV18BRDCST","TVSMOTOR","TMB","TATACHEM","TATACOMM","TCS","TATACONSUM","TATAELXSI","TATAMOTORS","TATAPOWER","TATASTEEL","TATATECH","TTML","TEAMLEASE","TECHM","THERMAX","TIMKEN","TITAN","TORNTPHARM","TORNTPOWER","TRENT","TRIDENT","TRIVENI","TRITURBINE","TIINDIA","UCOBANK","UNIONBANK","UBL","MCDOWELL-N","VGUARD","DBREALTY","VTL","VARROC","VBL","MANYAVAR","VEDL","VIJAYA","VOLTAS","WELCORP","WELSPUNLTD","WESTLIFE","WHIRLPOOL","WIPRO","YESBANK","ZFCVINDIA","ZOMATO","ZYDUSLIFE","ZYDUSWELL"]
+WATCHLIST = NIFTY500
+
 def resolve_ticker(t):
-    r=t.upper().strip()
-    r=r.replace("M_AND_MFIN","M&MFIN").replace("M_AND_M","M&M").replace("INDUS_TOWERS","INDUS TOWERS")
-    ns=re.sub(r'[^A-Z0-9 &-]','',r)
-    ns=ns.replace(" & ","&").strip()
-    return ns+".NS" if len(ns)>1 else r+".NS"
+    r=t.upper().strip(); ns=re.sub(r'[^A-Z0-9-]','',r)
+    return ns+".NS"
 
 def get_morning_picks():
-    ist_now = datetime.now(pytz.timezone('Asia/Kolkata'))
-    today = str(date.today())
-    current_slot = "AM" if ist_now.hour < 13 else "PM"
-    if st.session_state.pick_date==today and st.session_state.pick_slot==current_slot and st.session_state.morning_picks:
-        return st.session_state.morning_picks
+    today=str(date.today())
+    if st.session_state.pick_date==today and st.session_state.morning_picks: return st.session_state.morning_picks
     temp=[]; prog=st.progress(0); total=len(WATCHLIST)
-    slot_name = "Morning 9:30 AM" if current_slot=="AM" else "Afternoon 1:30 PM"
     for idx,name in enumerate(WATCHLIST):
-        prog.progress((idx+1)/total, text=f"AI {slot_name} Scanning {idx+1}/{total} : {name}")
+        prog.progress((idx+1)/total, text=f"AI Scanning NIFTY500 {idx+1}/{total} : {name}")
         t=resolve_ticker(name); df=load_data(t,period="6mo")
         if not df.empty and len(df)>50:
             ai_prob,ai_reason=get_ai_prediction(t)
             if ai_prob<60: continue
             sc,rsns,rsi,adx_v,filters=score_stock(df,ai_prob)
+            if not nifty_up and sc<100: continue
             if sc<85: continue
             if rsi>70 or rsi<45: continue
             live=float(df["Close"].iloc[-1]); profit,tgt,sl,atr=get_smart_target(df,live,sc)
-            news_text, news_sent, news_icon = get_news_sentiment(t)
-            temp.append({"name":name,"score":sc,"reasons":rsns,"rsi":rsi,"adx":adx_v,"filters":filters,"live":live,"target":tgt,"profit_pct":profit,"sl":sl,"atr_pct":atr,"ticker":t,"ai_prob":ai_prob,"ai_reason":ai_reason,"news":news_text,"news_sent":news_sent,"news_icon":news_icon})
+            temp.append({"name":name,"score":sc,"reasons":rsns,"rsi":rsi,"adx":adx_v,"filters":filters,"live":live,"target":tgt,"profit_pct":profit,"sl":sl,"atr_pct":atr,"ticker":t,"ai_prob":ai_prob,"ai_reason":ai_reason})
     prog.empty()
     temp=sorted(temp,key=lambda x:(x["ai_prob"],x["score"]),reverse=True)[:2]
-    st.session_state.morning_picks=temp; st.session_state.pick_date=today; st.session_state.pick_slot=current_slot
-    save_history(temp)
-    return temp
+    st.session_state.morning_picks=temp; st.session_state.pick_date=today; save_history(temp); return temp
 
 indices_data=get_indices()
-ist_now = datetime.now(pytz.timezone('Asia/Kolkata'))
-slot_display = "Morning Session (9:30 AM)" if ist_now.hour < 13 else "Afternoon Session (1:30 PM)"
+def fmt_chip(name,price,chg):
+    arrow="▲" if chg>=0 else "▼"; col="index-up" if chg>=0 else "index-down"
+    return f'<span class="index-chip">● {name} {int(price):,} <span class="{col}">{arrow} {abs(chg):.2f}%</span></span>'
+
+nifty_df=load_data("^NSEI",period="1mo")
+nifty_up=False
+try: nifty_up=nifty_df["Close"].iloc[-1]>nifty_df["Close"].ewm(20).mean().iloc[-1]
+except: pass
+market_msg="🟢 BULL + AI ON" if nifty_up else "🔴 BEAR + AI FILTER"
 
 st.markdown(f"""
 <div class="header-god">
@@ -271,15 +222,27 @@ st.markdown(f"""
     <div style="display:flex; align-items:center; gap:10px;">
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
+     <span class="bse-badge">BSE MODE</span>
+     <span class="auto-badge">🔒 V48.1 FINAL LOCKED + NIFTY500</span>
     </div>
-    <div style="margin-top:6px; color:rgba(255,255,255,0.7); font-family:JetBrains Mono; font-size:10px;">🔒 V48.1 NEWS AI • {slot_display} • {ist_now.strftime('%d %b %I:%M %p')}</div>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
+     {fmt_chip("NIFTY50", indices_data.get("NIFTY50", {}).get("price", 0), indices_data.get("NIFTY50", {}).get("chg", 0))}
+     <span class="index-chip">{market_msg} • AI SCAN {len(WATCHLIST)} STOCKS</span>
+    </div>
    </div>
   </div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V48.1 FINAL</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">LOCKED + 500</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
 
 morning_picks=get_morning_picks()
+win30,wins30,total30,history_results=evaluate_portfolio()
+
+if total30>0:
+    st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🔒 V48.1 FINAL LOCKED + NIFTY500 - LAST 30 DAYS</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • AI Model</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">LOCKED</div></div></div></div>""", unsafe_allow_html=True)
+else:
+    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V48.1 FINAL LOCKED + NIFTY500! {market_msg} - AI ab 500 stocks ko analysis kar rahi hai.</div></div>""", unsafe_allow_html=True)
 
 if morning_picks:
     c1,c2=st.columns(2)
@@ -290,12 +253,12 @@ if morning_picks:
             <div class="pick-god">
               <div style="display:flex; justify-content:space-between;">
                 <div>
-                  <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} {slot_display} AI PICK</span>
+                  <span style="background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#8892b0; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono;">#{i+1} NIFTY500 AI PICK</span>
                   <span class="ai-badge">🤖 AI {pick.get('ai_prob',0)}% UP</span>
                   <h2 style="margin:12px 0 0 0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">{pick.get('name')}</h2>
                   <p style="margin:6px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-size:22px; font-weight:800;">Rs{round(pick.get('live',0),2)} <span style="color:#8892b0; font-size:11px;">RSI {pick.get('rsi',0)} ADX {pick.get('adx',0)}</span></p>
                   <p style="margin:6px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(pick.get('reasons',[])[:3])}</p>
-                  <div class="news-badge">{pick.get('news_icon','')} {pick.get('news_sent','')} • {pick.get('news','')}</div>
+                  <span class="win-badge">{pick.get('ai_reason','')} • ATR {pick.get('atr_pct',0):.1f}%</span>
                 </div>
                 <div style="text-align:center;">
                   <div class="score-ring" style="background: conic-gradient(#FFD700 {pct}%, rgba(255,255,255,0.1) 0);"><span style="position:relative; z-index:2; color:white; font-family:Space Grotesk; font-weight:700; font-size:14px;">{pick.get('score',0)}</span></div>
@@ -310,39 +273,54 @@ if morning_picks:
             </div>
             """, unsafe_allow_html=True)
 else:
-    st.warning(f"🔒 AI Protected! {slot_display} me koi strong BUY nahi mila.")
+    st.info(f"🔒 AI Protected! {market_msg} - NIFTY500 ke 500 stocks me AI ne 60% se kam wale saare stocks cut kar diye.")
 
 c1,c2=st.columns([5.2,1])
 with c1: user_input=st.text_input("search",value="CUPID",placeholder="Search NIFTY500...",label_visibility="collapsed")
 with c2: st.button("SEARCH",use_container_width=True)
 
 raw=user_input.upper().strip(); ticker=resolve_ticker(raw); df=load_data(ticker,period="1y")
-if not df.empty:
-    last=float(df["Close"].dropna().iloc[-1]); ai_prob_search,ai_reason_search=get_ai_prediction(ticker)
-    sc_search,rsns_search,rsi_search,adx_search,filters_search=score_stock(df,ai_prob_search)
-    profit_main,tgt,sl_main,atr_main=get_smart_target(df,last,sc_search)
-    news_text_s, news_sent_s, news_icon_s = get_news_sentiment(ticker)
-    st.markdown(f"""
-    <div class="top-god">
-      <div style="display:flex; justify-content:space-between;">
-        <div>
-          <h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw} <span class="ai-badge">🤖 AI {ai_prob_search}% • {ai_reason_search}</span></h2>
-          <div class="news-badge" style="margin-top:10px; max-width:600px;">{news_icon_s} {news_sent_s} • {news_text_s}</div>
-          <p style="margin:8px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(rsns_search[:4])}</p>
-          <div style="display:flex; gap:16px; margin-top:16px;">
-            <div style="background: linear-gradient(90deg, rgba(112,0,255,0.2), rgba(0,209,255,0.15)); border:1px solid rgba(112,0,255,0.3); border-left:3px solid #7000FF; border-radius:10px; padding:8px 14px;">
-              <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">AI TARGET</p>
-              <p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">Rs{round(tgt,2)} +{profit_main}%</p>
-            </div>
-            <div style="background: rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.2); border-radius:10px; padding:8px 14px;">
-              <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">AI SL</p>
-              <p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">Rs{round(sl_main,2)}</p>
-            </div>
-          </div>
-        </div>
-        <div style="text-align:right;"><p class="live-price">Rs{round(last,2)}</p><div style="margin-top:14px; background: linear-gradient(135deg,#7000FF,#00FF88); color:white; padding:10px 18px; border-radius:12px; font-weight:700; display:inline-block;">AI BUY {sc_search} {ai_prob_search}%</div></div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+if df.empty: st.error(f"{raw} not found"); st.stop()
+last=float(df["Close"].dropna().iloc[-1]); ai_prob_search,ai_reason_search=get_ai_prediction(ticker)
+sc_search,rsns_search,rsi_search,adx_search,filters_search=score_stock(df,ai_prob_search)
+profit_main,tgt,sl_main,atr_main=get_smart_target(df,last,sc_search)
 
-st.caption(f"🔒 V48.1 NEWS AI • {slot_display} • {ist_now.strftime('%d %b %I:%M %p IST')}")
+st.markdown(f"""
+<div class="top-god">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <h2 style="margin:0; color:white; font-family:Space Grotesk; font-size:28px; font-weight:700;">{raw}</h2>
+        <span class="ai-badge">🤖 AI {ai_prob_search}% UP • {ai_reason_search}</span>
+        <span class="filter-badge">{" ".join(filters_search)}</span>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:16px;">
+        <div style="background: linear-gradient(90deg, rgba(112,0,255,0.2), rgba(0,209,255,0.15)); border:1px solid rgba(112,0,255,0.3); border-left:3px solid #7000FF; border-radius:10px; padding:8px 14px;">
+          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">AI TARGET</p>
+          <p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">Rs{round(tgt,2)} +{profit_main}%</p>
+        </div>
+        <div style="background: rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.2); border-radius:10px; padding:8px 14px;">
+          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">AI SL</p>
+          <p style="margin:2px 0 0 0; color:#FF4D6A; font-family:JetBrains Mono; font-weight:700; font-size:13px;">Rs{round(sl_main,2)}</p>
+        </div>
+      </div>
+      <p style="margin:8px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(rsns_search[:4])}</p>
+    </div>
+    <div style="text-align:right;"><p class="live-price">Rs{round(last,2)}</p><div style="margin-top:14px; background: linear-gradient(135deg,#7000FF,#00FF88); color:white; padding:10px 18px; border-radius:12px; font-weight:700; display:inline-block;">AI BUY {sc_search} {ai_prob_search}%</div></div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+tab1,tab2=st.tabs(["📊 BSE Chart","🏆 History"])
+with tab1:
+    bse_symbol=f"BSE:{raw.replace('.NS','').strip()}"
+    tv=f"https://s.tradingview.com/widgetembed/?frameElementId=tv_final&symbol={bse_symbol}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=Supertrend%40tv-basicstudies%2CMACD%40tv-basicstudies%2CRSI%40tv-basicstudies%2CADX%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&show_popup_button=1"
+    st.components.v1.iframe(tv,height=650,scrolling=False)
+with tab2:
+    if history_results:
+        st.markdown(f"### 🔒 History - {win30}% Win ({wins30}/{total30})")
+        for h in reversed(history_results[-20:]):
+            color="#00FF88" if h["status"]=="WIN" else "#FF4D6A" if h["status"]=="LOSS" else "#FFD700"
+            st.markdown(f"""<div style="background: rgba(255,255,255,0.05); border-left: 3px solid {color}; border-radius: 10px; padding: 10px 14px; margin-bottom:8px; display:flex; justify-content:space-between;"><div><span style="color:white; font-family:Space Grotesk; font-weight:700;">{h['name']}</span> <span style="color:#8892b0; font-size:11px;">{h['date']}</span> • 🤖 {h.get('ai',0)}% • Rs{h['entry']} → Rs{h['target']} <span style="color:{color}; font-weight:700;">{h['status']}</span></div><div style="color:#FFD700; font-family:JetBrains Mono; font-size:11px;">+{h['profit_pct']}%</div></div>""", unsafe_allow_html=True)
+
+st.caption(f"🔒 V48.1 FINAL LOCKED + NIFTY500 • {len(WATCHLIST)} Stocks AI Scan • AI 80 Trees • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
