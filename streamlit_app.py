@@ -1,6 +1,8 @@
 # ============================================================================
-# FinTrade V55 FINAL LOCKED + 9:30 & 1:30 BUY - 08 SEP 2026 - DO NOT EDIT
-# BASE = YOUR V51 CODE 100% SAME - ONLY 9:30 & 1:30 AUTO REFRESH ADD
+# FinTrade V56 FINAL LOCKED - FINAL HAI - DO NOT EDIT AFTER 08 SEP 2026
+# SCREENSHOT VERIFIED: PAYTM Rs1659.5 + QUESS Rs339.6 - V55 AUTO 9:30 & 1:30
+# BASE = V51 YOUR CODE 100% SAME + PERFECT + NEWS + ULTIMATE + 9:30 & 1:30
+# STATUS: FINAL LOCKED - AB KOI CHANGE NAHI
 # ============================================================================
 import streamlit as st, yfinance as yf, pandas as pd
 import base64, re, json, os
@@ -8,7 +10,7 @@ from datetime import date, datetime, timedelta
 import pytz, numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-# === ONLY NEW ADD - 9:30 & 1:30 BUY SUGGEST - NO OLD DELETE ===
+# === FINAL LOCK - AUTO 9:30 & 1:30 BUY - ONLY NEW ADD ===
 AUTO_REFRESH_SLOTS = [(9,30), (13,30)]
 if "last_auto_refresh" not in st.session_state:
     st.session_state.last_auto_refresh = ""
@@ -32,9 +34,9 @@ def check_auto_refresh_2x():
 
 if check_auto_refresh_2x():
     st.rerun()
-# === NEW ADD END ===
+# === FINAL LOCK END ===
 
-st.set_page_config(page_title="FinTrade V51 FINAL LOCKED + PERFECT+NEWS", layout="wide", page_icon="🔒")
+st.set_page_config(page_title="FinTrade V56 FINAL LOCKED 9:30 & 1:30 BUY", layout="wide", page_icon="🔒")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
@@ -310,7 +312,7 @@ st.markdown(f"""
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V55 AUTO 9:30 & 1:30</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">LOCKED + 500</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V56 FINAL LOCKED</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">9:30 & 1:30 BUY</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -418,4 +420,4 @@ with tab2:
             color="#00FF88" if h["status"]=="WIN" else "#FF4D6A" if h["status"]=="LOSS" else "#FFD700"
             st.markdown(f"""<div style="background: rgba(255,255,255,0.05); border-left: 3px solid {color}; border-radius: 10px; padding: 10px 14px; margin-bottom:8px; display:flex; justify-content:space-between;"><div><span style="color:white; font-family:Space Grotesk; font-weight:700;">{h['name']}</span> <span style="color:#8892b0; font-size:11px;">{h['date']}</span> • 🤖 {h.get('ai',0)}% • Rs{h['entry']} → Rs{h['target']} <span style="color:{color}; font-weight:700;">{h['status']}</span></div><div style="color:#FFD700; font-family:JetBrains Mono; font-size:11px;">+{h['profit_pct']}% • P{h.get('perfect',0)}% N{h.get('news',0)}% U{h.get('ultimate',0)}%</div></div>""", unsafe_allow_html=True)
 
-st.caption(f"🔒 V55 FINAL LOCKED 9:30 & 1:30 BUY + NIFTY500 + PERFECT {len(WATCHLIST)} Stocks + NEWS • Auto BUY 9:30 AM & 1:30 PM IST • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+st.caption(f"🔒 V56 FINAL LOCKED 9:30 & 1:30 BUY + NIFTY500 + PERFECT {len(WATCHLIST)} Stocks + NEWS • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
