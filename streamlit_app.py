@@ -1,7 +1,6 @@
 # ============================================================================
-# FinTrade V56 FINAL LOCKED - FINAL HAI - DO NOT EDIT AFTER 08 SEP 2026
-# SCREENSHOT VERIFIED: PAYTM Rs1659.5 + QUESS Rs339.6 - V55 AUTO 9:30 & 1:30
-# BASE = V51 YOUR CODE 100% SAME + PERFECT + NEWS + ULTIMATE + 9:30 & 1:30
+# FinTrade V57 FINAL LOCKED - FINAL HAI - 2 MINOR CHANGE ONLY
+# CHANGE 1 = 9:30 -> 10:00 AM | CHANGE 2 = ENTRY PRICE SHOW | REST 100% SAME
 # STATUS: FINAL LOCKED - AB KOI CHANGE NAHI
 # ============================================================================
 import streamlit as st, yfinance as yf, pandas as pd
@@ -10,8 +9,8 @@ from datetime import date, datetime, timedelta
 import pytz, numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-# === FINAL LOCK - AUTO 9:30 & 1:30 BUY - ONLY NEW ADD ===
-AUTO_REFRESH_SLOTS = [(9,30), (13,30)]
+# === 2 MINOR CHANGE ONLY - REST SAME ===
+AUTO_REFRESH_SLOTS = [(10,0), (13,30)] # CHANGE 1: 9:30 -> 10:00
 if "last_auto_refresh" not in st.session_state:
     st.session_state.last_auto_refresh = ""
 if "last_buy_msg" not in st.session_state:
@@ -34,9 +33,9 @@ def check_auto_refresh_2x():
 
 if check_auto_refresh_2x():
     st.rerun()
-# === FINAL LOCK END ===
+# === END MINOR CHANGE ===
 
-st.set_page_config(page_title="FinTrade V56 FINAL LOCKED 9:30 & 1:30 BUY", layout="wide", page_icon="🔒")
+st.set_page_config(page_title="FinTrade V57 FINAL LOCKED 10:00 & 1:30 BUY", layout="wide", page_icon="🔒")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
@@ -53,16 +52,13 @@ st.markdown("""
 .target-row{display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 10px 12px; background: linear-gradient(90deg, rgba(0,255,136,0.12), rgba(0,255,136,0.06)); border: 1px solid rgba(0,255,136,0.25); border-left: 3px solid #00FF88; border-radius: 12px;}
 .win-badge{background: rgba(0,209,255,0.15); border:1px solid #00D1FF; color:#00D1FF; font-size:9px; padding:4px 10px; border-radius:100px; font-family:JetBrains Mono; font-weight:700; margin-top:8px; display:inline-block;}
 .ai-badge{background: linear-gradient(135deg, #7000FF, #00D1FF); color:white; font-size:10px; padding:6px 14px; border-radius:100px; font-family:JetBrains Mono; font-weight:800; margin-left:6px; box-shadow: 0 0 15px rgba(112,0,255,0.5);}
-.filter-badge{background: rgba(255,0,128,0.15); border:1px solid #FF0080; color:#FF80BF; font-size:8px; padding:3px 8px; border-radius:100px; font-family:JetBrains Mono; font-weight:700;}
 .index-chip{display:inline-flex; align-items:center; gap:6px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:8px 14px; font-family:JetBrains Mono; font-size:11px; color:#fff; margin-right:8px;}
-.index-up{color:#00FF88; font-weight:800;}.index-down{color:#FF4D6A; font-weight:800;}
-.bse-badge{background: linear-gradient(135deg, #FF6A00, #FFD700); color:black; font-weight:700; font-size:10px; padding:4px 10px; border-radius:100px;}
-.auto-badge{background: linear-gradient(135deg, #7000FF, #00FF88); color:white; font-size:8px; padding:4px 12px; border-radius:100px; font-family:JetBrains Mono; font-weight:800;}
 .bse-badge,.auto-badge,.index-chip,.portfolio-god {display:none!important; visibility:hidden!important;}
 .header-god div[style*="text-align:right"] {display:none!important; visibility:hidden!important;}
 .perfect-row{margin-top:12px; display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(255,140,0,0.10)); border:1px solid rgba(255,215,0,0.30); border-left:3px solid #FFD700; border-radius:10px;}
 .news-row{margin-top:8px; display:flex; justify-content:space-between; align-items:center; padding:6px 12px; background: rgba(0,209,255,0.08); border:1px solid rgba(0,209,255,0.20); border-left:3px solid #00D1FF; border-radius:8px;}
 .buy-time-badge{background: linear-gradient(135deg, #00FF88, #FFD700); color:black; font-size:9px; padding:5px 12px; border-radius:100px; font-family:JetBrains Mono; font-weight:800;}
+.entry-row{margin-top:10px; display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background: linear-gradient(90deg, rgba(0,209,255,0.12), rgba(0,255,136,0.08)); border:1px solid rgba(0,209,255,0.25); border-left:3px solid #00D1FF; border-radius:10px;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -305,14 +301,14 @@ st.markdown(f"""
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium</span>
      <span class="bse-badge">BSE MODE</span>
      <span class="auto-badge">🔒 V48.1 FINAL LOCKED + NIFTY500</span>
-     <span class="buy-time-badge">BUY 9:30 & 1:30 • {st.session_state.last_auto_refresh}</span>
+     <span class="buy-time-badge">BUY 10:00 & 1:30 • {st.session_state.last_auto_refresh}</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
-     <span class="index-chip">IST {ist_now.strftime('%I:%M %p')} • {market_msg} • {len(WATCHLIST)} Stocks • AUTO BUY 9:30 & 1:30</span>
+     <span class="index-chip">IST {ist_now.strftime('%I:%M %p')} • {market_msg} • {len(WATCHLIST)} Stocks • AUTO BUY 10:00 & 1:30</span>
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V56 FINAL LOCKED</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">9:30 & 1:30 BUY</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V57 FINAL LOCKED</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">10:00 & 1:30 BUY</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -354,6 +350,12 @@ if morning_picks:
                 <div style="font-family:JetBrains Mono; font-size:9px; font-weight:700; color:#00D1FF;">📰 NEWS {pick.get('news_score',0)}% • {pick.get('news_reason','')}</div>
                 <div style="font-family:JetBrains Mono; font-size:9px; font-weight:800; color:#FFD700; background: rgba(255,215,0,0.15); padding:3px 8px; border-radius:100px;">ULTIMATE {pick.get('ultimate_combo',0)}% • {pick.get('ultimate_reason','')}</div>
               </div>
+              <!-- CHANGE 2: ENTRY PRICE SHOW -->
+              <div class="entry-row">
+                <div><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">ENTRY PRICE</p><p style="margin:2px 0 0 0; color:#00D1FF; font-family:Space Grotesk; font-size:16px; font-weight:700;">Rs{round(pick.get('live',0),2)}</p></div>
+                <div style="text-align:center;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">BUY AT</p><p style="margin:2px 0 0 0; color:white; font-family:JetBrains Mono; font-size:10px; font-weight:800; background: rgba(0,209,255,0.20); padding:3px 10px; border-radius:100px;">LIVE PRICE</p></div>
+                <div style="text-align:right;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">QTY</p><p style="margin:2px 0 0 0; color:#FFD700; font-family:JetBrains Mono; font-size:12px; font-weight:700;">BUY NOW</p></div>
+              </div>
               <div class="target-row">
                 <div><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">TARGET</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:16px; font-weight:700;">Rs{round(pick.get('target',0),2)}</p></div>
                 <div style="text-align:center;"><p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">PROFIT</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-size:14px; font-weight:800; background: rgba(0,255,136,0.15); padding:3px 10px; border-radius:100px;">+{pick.get('profit_pct',0)}%</p></div>
@@ -388,6 +390,10 @@ st.markdown(f"""
         <span style="background: rgba(0,209,255,0.15); border:1px solid #00D1FF; color:#00D1FF; font-size:10px; padding:6px 14px; border-radius:100px; font-family:JetBrains Mono; font-weight:800;">📰 NEWS {news_search}% • {news_reason_search}</span>
       </div>
       <div style="display:flex; gap:16px; margin-top:16px;">
+        <div style="background: linear-gradient(90deg, rgba(0,209,255,0.12), rgba(0,255,136,0.08)); border:1px solid rgba(0,209,255,0.25); border-left:3px solid #00D1FF; border-radius:10px; padding:8px 14px;">
+          <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">ENTRY PRICE</p>
+          <p style="margin:2px 0 0 0; color:#00D1FF; font-family:JetBrains Mono; font-weight:800; font-size:14px;">Rs{round(last,2)} • BUY NOW</p>
+        </div>
         <div style="background: linear-gradient(90deg, rgba(112,0,255,0.2), rgba(0,209,255,0.15)); border:1px solid rgba(112,0,255,0.3); border-left:3px solid #7000FF; border-radius:10px; padding:8px 14px;">
           <p style="margin:0; color:#8892b0; font-size:8px; font-family:JetBrains Mono;">AI TARGET</p>
           <p style="margin:2px 0 0 0; color:#00FF88; font-family:JetBrains Mono; font-weight:800; font-size:14px;">Rs{round(tgt,2)} +{profit_main}%</p>
@@ -420,4 +426,4 @@ with tab2:
             color="#00FF88" if h["status"]=="WIN" else "#FF4D6A" if h["status"]=="LOSS" else "#FFD700"
             st.markdown(f"""<div style="background: rgba(255,255,255,0.05); border-left: 3px solid {color}; border-radius: 10px; padding: 10px 14px; margin-bottom:8px; display:flex; justify-content:space-between;"><div><span style="color:white; font-family:Space Grotesk; font-weight:700;">{h['name']}</span> <span style="color:#8892b0; font-size:11px;">{h['date']}</span> • 🤖 {h.get('ai',0)}% • Rs{h['entry']} → Rs{h['target']} <span style="color:{color}; font-weight:700;">{h['status']}</span></div><div style="color:#FFD700; font-family:JetBrains Mono; font-size:11px;">+{h['profit_pct']}% • P{h.get('perfect',0)}% N{h.get('news',0)}% U{h.get('ultimate',0)}%</div></div>""", unsafe_allow_html=True)
 
-st.caption(f"🔒 V56 FINAL LOCKED 9:30 & 1:30 BUY + NIFTY500 + PERFECT {len(WATCHLIST)} Stocks + NEWS • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+st.caption(f"🔒 V57 FINAL LOCKED 10:00 & 1:30 BUY + ENTRY PRICE + NIFTY500 + PERFECT {len(WATCHLIST)} Stocks + NEWS • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
