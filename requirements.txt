@@ -8,3 +8,5 @@ numpy
 pytz
 ta
 pillow
+gspread
+oauth2client
