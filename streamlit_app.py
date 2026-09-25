@@ -1,7 +1,6 @@
 # ============================================================================
-# FinTrade V58 FINAL LOCKED - WIN 0% FIXED
-# CHANGE 1 = Hide CSS hataya | CHANGE 2 = RSI 48-58 Strict + EMA 6% Top Filter
-# CHANGE 3 = Target 5.5% Fixed + SL 2.8% | REST 100% SAME AS V57
+# FinTrade V58 FINAL LOCKED - FULL CODE - NIFTY500 500 Stocks - WIN FIXED
+# RSI 48-58 + EMA 6% Top Filter + Target 5.5% + SL 2.8% + AI 75%
 # ============================================================================
 import streamlit as st, yfinance as yf, pandas as pd
 import base64, re, json, os
@@ -33,7 +32,7 @@ def check_auto_refresh_2x():
 if check_auto_refresh_2x():
     st.rerun()
 
-st.set_page_config(page_title="FinTrade V58 FINAL LOCKED WIN FIXED", layout="wide", page_icon="🔒")
+st.set_page_config(page_title="FinTrade V58 FINAL NIFTY500 WIN FIXED", layout="wide", page_icon="🔒")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@800&display=swap');
@@ -129,7 +128,6 @@ def get_ai_prediction(ticker):
         return int(prob_up),reason
     except: return 50,"AI Error"
 
-# === V58 FIXED SCORE - WIN 0% SOLUTION ===
 def score_stock(df, ai_prob):
     try:
         c=df["Close"]; e20=c.ewm(20).mean(); e50=c.ewm(50).mean(); e200=c.ewm(200).mean()
@@ -142,14 +140,8 @@ def score_stock(df, ai_prob):
         adx_val=float(adx.iloc[-1]) if not adx.empty else 0
         score=0; reasons=[]; filters=[]
         r=float(rsi.iloc[-1])
-
-        # V58 STRICT FILTER 1: RSI 48-58 only
-        if not (48 <= r <= 58):
-            return 0, [f"RSI {round(r,1)} SKIP"], round(r,1), round(adx_val,1), [f"RSI {round(r,1)} SKIP"]
-        # V58 STRICT FILTER 2: Price EMA20 se 6% se zyada upar = TOP
-        if last > e20.iloc[-1] * 1.06:
-            return 0, [f"TOP {round((last/e20.iloc[-1]-1)*100,1)}% above EMA"], round(r,1), round(adx_val,1), ["TOP SKIP"]
-
+        if not (48 <= r <= 58): return 0, [f"RSI {round(r,1)} SKIP"], round(r,1), round(adx_val,1), [f"RSI {round(r,1)} SKIP"]
+        if last > e20.iloc[-1] * 1.06: return 0, [f"TOP {round((last/e20.iloc[-1]-1)*100,1)}% above EMA"], round(r,1), round(adx_val,1), ["TOP SKIP"]
         if e20.iloc[-1]>e50.iloc[-1]: score+=20; reasons.append("EMA Uptrend")
         if e50.iloc[-1]>e200.iloc[-1]: score+=15; reasons.append("Long Bull")
         if last>e20.iloc[-1]: score+=15; reasons.append("Price>EMA20")
@@ -165,7 +157,6 @@ def score_stock(df, ai_prob):
     except: return 0,[],50,0,[]
 
 def get_smart_target(df, live, score):
-    # V58 FIXED: Small target = More WIN
     try: return 5.5, live*1.055, live*0.972, 2.0
     except: return 5.5, live*1.055, live*0.972, 2.0
 
@@ -248,7 +239,7 @@ def evaluate_portfolio():
     total=len(results); win_pct=int(wins/total*100) if total>0 else 0
     return win_pct,wins,total,results
 
-NIFTY500 = ["RELIANCE","TCS","INFY","HDFCBANK","ICICIBANK","SBIN","BHARTIARTL","ITC","BAJFINANCE","CUPID","REDINGTON","WELCORP"]
+NIFTY500 = ["360ONE","3MINDIA","ABB","ACC","AIAENG","APLAPOLLO","AUBANK","AARTIIND","AAVAS","ABBOTINDIA","ADANIENSOL","ADANIENT","ADANIGREEN","ADANIPORTS","ADANIPOWER","ATGL","ABCAPITAL","ABFRL","ABSLAMC","ADVENZYMES","AEGISCHEM","AFFLE","AJANTPHARM","AKZOINDIA","ALKEM","ALKYLAMINE","ALOKINDS","AMBER","AMBUJACEM","ANANDRATHI","ANGELONE","ANURAS","APARINDS","APLLTD","APOLLOHOSP","APOLLOTYRE","APTUS","ASAHIINDIA","ASHOKLEY","ASIANPAINT","ASTERDM","ASTRAL","ATUL","AUROPHARMA","AVANTIFEED","DMART","AXISBANK","BEML","BLS","BSE","BAJAJ-AUTO","BAJAJFINSV","BAJFINANCE","BALKRISIND","BALRAMCHIN","BANDHANBNK","BANKBARODA","BANKINDIA","BATAINDIA","BAYERCROP","BERGEPAINT","BEL","BHARATFORG","BHEL","BPCL","BHARTIARTL","BIKAJI","BIOCON","BIRLACORPN","BSOFT","BLUEDART","BLUESTARCO","BBTC","BORORENEW","BOSCHLTD","BRIGADE","BRITANNIA","MAPMYINDIA","CCL","CESC","CGPOWER","CIEINDIA","CRISIL","CSBBANK","CAMPUS","CANFINHOME","CANBK","CAPLIPOINT","CGCL","CARBORUNDU","CASTROLIND","CEATLTD","CENTRALBK","CDSL","CENTURYPLY","CERA","CHALET","CHAMBLFERT","CHEMPLASTS","CHOLAHLDNG","CHOLAFIN","CIPLA","CUB","CLEAN","COALINDIA","COCHINSHIP","COFORGE","COLPAL","CAMS","CONCOR","COROMANDEL","CRAFTSMAN","CREDITACC","CROMPTON","CUMMINSIND","CUPID","CYIENT","DCMSHRIRAM","DLF","DABUR","DALBHARAT","DATAPATTNS","DEEPAKFERT","DEEPAKNTR","DELHIVERY","DELTACORP","DEVYANI","DIVISLAB","DIXON","LALPATHLAB","DRREDDY","EIDPARRY","EIHOTEL","EPL","EASEMYTRIP","ECLERX","ELECON","ELGIEQUIP","EMAMILTD","ENDURANCE","ENGINERSIN","EQUITASBNK","ERIS","ESABINDIA","EXIDEIND","FDC","FEDERALBNK","FACT","FINEORG","FINCABLES","FINPIPE","FSL","FIVESTAR","FORTIS","GAIL","GMMPFAUDLR","GMRINFRA","GALAXYSURF","GRSE","GARFIBRES","GICRE","GILLETTE","GLAND","GLAXO","GLENMARK","GODFRYPHLP","GODREJCP","GODREJIND","GODREJPROP","GRANULES","GRAPHITE","GRASIM","GESHIP","GRINDWELL","GUJALKALI","GAEL","FLUOROCHEM","GUJGASLTD","GMDCLTD","GNFC","GPPL","GSFC","GSPL","HEG","HCLTECH","HDFCAMC","HDFCBANK","HDFCLIFE","HFCL","HAPPSTMNDS","HAPPYFORGE","HATHWAY","HATSUN","HAVELLS","HEROMOTOCO","HINDALCO","HAL","HINDCOPPER","HINDPETRO","HINDUNILVR","HINDWAREAP","HINDZINC","POWERINDIA","HOMEFIRST","HONASA","HONAUT","HUDCO","ICICIBANK","ICICIGI","ICICIPRULI","IDBI","IDFCFIRSTB","IDFC","IIFL","IRB","IRCTC","IRFC","IFCI","IEX","INDIANB","IOLCP","IGL","INDHOTEL","INDIACEM","INDIAMART","INDIANHUME","INDUSINDBK","NAUKRI","INFY","INOXWIND","INTELLECT","INDUS TOWERS","IPCALAB","JBCHEPHARM","JKCEMENT","JKLAKSHMI","JKPAPER","JMFINANCIL","JSWENERGY","JSWINFRA","JSWSTEEL","JAMNAAUTO","JINDALSAW","JSL","JINDALSTEL","JIOFIN","JUBLFOOD","JUBLINGREA","JUBLPHARMA","JUSTDIAL","JYOTHYLAB","KPRMILL","KEI","KFINTECH","KALYANKJIL","KAJARIACER","KPITTECH","KARURVYSYA","KAYNES","KEC","KNRCON","KPIL","KOTAKBANK","KIMS","LTF","LTTS","LT","LTIM","LATENTVIEW","LAURUSLABS","LXCHEM","LEMONTREE","LICHSGFIN","LICI","LINDE","LUPIN","MRF","MGL","MAHSEAMLES","M&MFIN","M&M","MANAPPURAM","MRPL","MANKIND","MARICO","MARUTI","MASTEK","MFSL","MAXHEALTH","MAZDOCK","MEDANTA","MEDPLUS","METROPOLIS","MOTHERSON","MSUMI","MPHASIS","MCX","MUTHOOTFIN","NATCOPHARM","NBCC","NCC","NHPC","NLCINDIA","NMDC","NSLNISP","NTPC","NH","NATIONALUM","NAVINFLUOR","NAZARA","NESTLEIND","NETWORK18","NAM-INDIA","NUVAMA","OBEROIRLTY","ONGC","OIL","OLECTRA","PAYTM","OFSS","POLICYBZR","PCBL","PFC","PEL","PHOENIXLTD","PIDILITIND","PPLPHARMA","POLYCAB","POWERGRID","PRAJIND","PRESTIGE","PRINCEPIPE","PRSMJOHNSN","PGHH","PGHL","PNB","PNBHOUSING","QUESS","RBLBANK","RECLTD","RHIM","RITES","RADICO","RVNL","RAILTEL","RALLIS","RKFORGE","RCF","RTNINDIA","RAYMOND","REDINGTON","RELIANCE","RBA","ROUTE","SBICARD","SBILIFE","SJVN","SKFINDIA","SRF","SANOFI","SAPPHIRE","SAREGAMA","SCHAEFFLER","SEQUENT","SFL","SHOPERSTOP","SHYAMMETL","SIEMENS","SOBHA","SOLARINDS","SONACOMS","STARHEALTH","SBIN","SAIL","SWSOLAR","SUMICHEM","SUNPHARMA","SUNTV","SUNDARMFIN","SUNDRMFAST","SUPREMEIND","SUZLON","SYNGENE","SYRMA","TTKPRESTIG","TV18BRDCST","TVSMOTOR","TMB","TATACHEM","TATACOMM","TCS","TATACONSUM","TATAELXSI","TATAMOTORS","TATAPOWER","TATASTEEL","TATATECH","TTML","TEAMLEASE","TECHM","THERMAX","TIMKEN","TITAN","TORNTPHARM","TORNTPOWER","TRENT","TRIDENT","TRIVENI","TRITURBINE","TIINDIA","UCOBANK","UNIONBANK","UBL","MCDOWELL-N","VGUARD","DBREALTY","VTL","VARROC","VBL","MANYAVAR","VEDL","VIJAYA","VOLTAS","WELCORP","WELSPUNLTD","WESTLIFE","WHIRLPOOL","WIPRO","YESBANK","ZFCVINDIA","ZOMATO","ZYDUSLIFE","ZYDUSWELL"]
 WATCHLIST = NIFTY500
 
 def resolve_ticker(t):
@@ -258,8 +249,9 @@ def resolve_ticker(t):
 def get_morning_picks():
     today=str(date.today())
     if st.session_state.pick_date==today and st.session_state.morning_picks: return st.session_state.morning_picks
-    temp=[]
-    for name in WATCHLIST:
+    temp=[]; prog=st.progress(0); total=len(WATCHLIST)
+    for idx,name in enumerate(WATCHLIST):
+        prog.progress((idx+1)/total, text=f"V58 Scanning NIFTY500 {idx+1}/{total} : {name}")
         t=resolve_ticker(name); df=load_data(t,period="6mo")
         if not df.empty and len(df)>50:
             ai_prob,ai_reason=get_ai_prediction(t)
@@ -271,6 +263,7 @@ def get_morning_picks():
             news_score, news_reason = get_news_sentiment(t)
             ultimate_combo, ultimate_reason = get_ultimate_combo(perfect_combo, news_score)
             temp.append({"name":name,"score":sc,"reasons":rsns,"rsi":rsi,"adx":adx_v,"filters":filters,"live":live,"target":tgt,"profit_pct":profit,"sl":sl,"atr_pct":atr,"ticker":t,"ai_prob":ai_prob,"ai_reason":ai_reason,"perfect_combo":perfect_combo,"perfect_reason":perfect_reason,"news_score":news_score,"news_reason":news_reason,"ultimate_combo":ultimate_combo,"ultimate_reason":ultimate_reason})
+    prog.empty()
     temp=sorted(temp,key=lambda x:(x["ultimate_combo"],x["ai_prob"],x["score"]),reverse=True)[:2]
     st.session_state.morning_picks=temp; st.session_state.pick_date=today; save_history(temp); return temp
 
@@ -290,14 +283,14 @@ st.markdown(f"""
     <div style="display:flex; align-items:center; gap:10px;">
      <h1 style="margin:0; color:white; font-family:Space Grotesk; font-size:26px; font-weight:700;">FinTrade</h1>
      <span style="background: linear-gradient(135deg,#00FF88,#00D1FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:Space Grotesk; font-weight:700; font-size:26px;">Premium V58</span>
-     <span class="buy-time-badge">WIN FIXED • {st.session_state.last_auto_refresh}</span>
+     <span class="buy-time-badge">NIFTY500 + WIN FIXED • {st.session_state.last_auto_refresh}</span>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
-     <span class="index-chip">IST {ist_now.strftime('%I:%M %p')} • {market_msg} • {len(WATCHLIST)} Stocks • V58 FIXED</span>
+     <span class="index-chip">IST {ist_now.strftime('%I:%M %p')} • {market_msg} • {len(WATCHLIST)} Stocks • V58 NIFTY500 FIXED</span>
     </div>
    </div>
   </div>
-  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V58 WIN FIXED</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">10:00 & 1:30 BUY</p></div>
+  <div style="text-align:right;"><p style="margin:0; color:#fff; font-family:JetBrains Mono; font-size:11px; opacity:0.6;">V58 NIFTY500</p><p style="margin:2px 0 0 0; color:#00FF88; font-family:Space Grotesk; font-size:10px; font-weight:700;">WIN FIXED</p></div>
  </div>
 </div>
 """, unsafe_allow_html=True)
@@ -306,9 +299,9 @@ morning_picks=get_morning_picks()
 win30,wins30,total30,history_results=evaluate_portfolio()
 
 if total30>0:
-    st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🔒 V58 WIN FIXED - LAST 30 DAYS</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • AI Model</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">LOCKED</div></div></div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="portfolio-god"><div style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; opacity:0.8;">🔒 V58 NIFTY500 - LAST 30 DAYS</div><div style="font-size:24px; font-weight:800; margin-top:4px;">{win30}% WIN • {wins30}/{total30} Hit • AI Model</div></div><div style="text-align:right;"><div style="font-size:42px; font-weight:800;">{win30}%</div><div style="font-size:10px; background:black; color:#FFD700; padding:4px 10px; border-radius:100px;">NIFTY500</div></div></div></div>""", unsafe_allow_html=True)
 else:
-    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V58 WIN FIXED! {market_msg} - Ab RSI 48-58 + EMA 6% filter active hai. Top wale stocks auto SKIP!</div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="portfolio-god"><div style="font-size:13px;">🔒 V58 NIFTY500 WIN FIXED! {market_msg} - RSI 48-58 + EMA 6% + AI 75% + Target 5.5% active hai. Top wale stocks auto SKIP!</div></div>""", unsafe_allow_html=True)
 
 if morning_picks:
     c1,c2=st.columns(2)
@@ -352,7 +345,7 @@ if morning_picks:
             </div>
             """, unsafe_allow_html=True)
 else:
-    st.info(f"🔒 V58 Protected! {market_msg} - RSI 48-58 ke bahar wale aur TOP wale stocks SKIP ho gaye. Aaj koi safe pick nahi!")
+    st.info(f"🔒 V58 Protected! {market_msg} - NIFTY500 ke 500 stocks me se koi bhi RSI 48-58 + AI 75%+ par nahi hai. Aaj safe pick nahi hai - Paisa Bacha!")
 
 c1,c2=st.columns([5.2,1])
 with c1: user_input=st.text_input("search",value="CUPID",placeholder="Search NIFTY500...",label_visibility="collapsed")
@@ -394,7 +387,7 @@ st.markdown(f"""
           <p style="margin:2px 0 0 0; color:#FFD700; font-family:JetBrains Mono; font-weight:800; font-size:14px;">{ultimate_search}%</p>
         </div>
       </div>
-      <p style="margin:8px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(rsns_search[:4]) if rsns_search else "V58 SKIP - RSI/Top filter"}</p>
+      <p style="margin:8px 0 0 0; color:rgba(255,255,255,0.7); font-size:11px;">{" • ".join(rsns_search[:4]) if rsns_search else "V58 SKIP - RSI/Top filter - Safe nahi hai"}</p>
     </div>
     <div style="text-align:right;"><p class="live-price">Rs{round(last,2)}</p><div style="margin-top:14px; background: linear-gradient(135deg,#7000FF,#00FF88); color:white; padding:10px 18px; border-radius:12px; font-weight:700; display:inline-block;">AI BUY {sc_search} {ai_prob_search}%</div></div>
   </div>
@@ -413,4 +406,4 @@ with tab2:
             color="#00FF88" if h["status"]=="WIN" else "#FF4D6A" if h["status"]=="LOSS" else "#FFD700"
             st.markdown(f"""<div style="background: rgba(255,255,255,0.05); border-left: 3px solid {color}; border-radius: 10px; padding: 10px 14px; margin-bottom:8px; display:flex; justify-content:space-between;"><div><span style="color:white; font-family:Space Grotesk; font-weight:700;">{h['name']}</span> <span style="color:#8892b0; font-size:11px;">{h['date']}</span> • 🤖 {h.get('ai',0)}% • Rs{h['entry']} → Rs{h['target']} <span style="color:{color}; font-weight:700;">{h['status']}</span></div><div style="color:#FFD700; font-family:JetBrains Mono; font-size:11px;">+{h['profit_pct']}%</div></div>""", unsafe_allow_html=True)
 
-st.caption(f"🔒 V58 WIN FIXED • RSI 48-58 + EMA 6% Top Filter + Target 5.5% • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
+st.caption(f"🔒 V58 NIFTY500 WIN FIXED • RSI 48-58 + EMA 6% + AI 75% + 5.5% Target • IST: {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d %b %I:%M %p')}")
